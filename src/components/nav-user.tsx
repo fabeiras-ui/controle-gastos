@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 
 import {signOut} from "next-auth/react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -45,9 +46,12 @@ export function NavUser({
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild className={"w-full"}>
 						<SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-							<div className="h-8 w-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-medium text-xs">
-								{user.name ? user.name.substring(0, 2).toUpperCase() : "U"}
-							</div>
+							<Avatar className="h-8 w-8 rounded-lg">
+								<AvatarImage src={user.avatar} />
+								<AvatarFallback className="rounded-lg bg-blue-100 text-blue-700 font-medium text-xs">
+									{user.name ? user.name.substring(0, 2).toUpperCase() : "U"}
+								</AvatarFallback>
+							</Avatar>
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-semibold">{user.name}</span>
 								<span className="truncate text-xs">{user.email}</span>
@@ -64,10 +68,12 @@ export function NavUser({
 						<DropdownMenuGroup>
 							<DropdownMenuLabel className="p-0 font-normal">
 								<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-									<div
-										className="h-8 w-8 rounded-lg bg-zinc-100 flex items-center justify-center font-medium text-xs">
-										{user.name ? user.name.substring(0, 2).toUpperCase() : "U"}
-									</div>
+									<Avatar className="h-8 w-8 rounded-lg">
+										<AvatarImage src={user.avatar} />
+										<AvatarFallback className="rounded-lg bg-zinc-100 font-medium text-xs">
+											{user.name ? user.name.substring(0, 2).toUpperCase() : "U"}
+										</AvatarFallback>
+									</Avatar>
 									<div className="grid flex-1 text-left text-sm leading-tight">
 										<span className="truncate font-semibold">{user.name}</span>
 										<span className="truncate text-xs">{user.email}</span>

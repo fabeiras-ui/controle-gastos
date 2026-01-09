@@ -4,7 +4,6 @@ import React from "react";
 import { LiveblocksProvider as Provider } from "@liveblocks/react";
 import { RoomProvider } from "../../liveblocks.config";
 import { LiveCursors } from "@/components/LiveCursors";
-import { PresenceBar } from "@/components/PresenceBar";
 import { useSession } from "next-auth/react";
 
 const COLORS = [
@@ -14,18 +13,21 @@ const COLORS = [
 ];
 
 export function LiveblocksProvider({ children }: { children: React.ReactNode }) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const color = React.useMemo(() => COLORS[Math.floor(Math.random() * COLORS.length)], []);
 
-  if (status !== "authenticated") {
-    return <>{children}</>;
-  }
+  const initialPresence = React.useMemo(() => ({
+    cursor: null,
+    name: session?.user?.name || session?.user?.nickname || "Usuário",
+    color,
+    avatar: session?.user?.image || null,
+    isAuthenticated: status === "authenticated"
+  }), [session, status, color]);
 
   return (
     <Provider publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!}>
-      <RoomProvider id="vault-family-room" initialPresence={{ cursor: null, name: "", color }}>
-        <PresenceBar />
-        <LiveCursors />
+      <RoomProvider id="vault-family-room" initialPresence={initialPresence}>
+        {status === "authenticated" && <LiveCursors />}
         {children}
       </RoomProvider>
     </Provider>

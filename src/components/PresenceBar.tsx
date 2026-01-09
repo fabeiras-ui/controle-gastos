@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useOthers, useSelf } from "../../liveblocks.config";
+import { useOthers } from "../../liveblocks.config";
 import {
   Avatar,
   AvatarFallback,
@@ -11,27 +11,24 @@ import {
 
 export function PresenceBar() {
   const others = useOthers();
-  const self = useSelf();
+  const authenticatedOthers = others;
 
-  const allUsers = [
-    ...(self?.presence?.name ? [{ connectionId: "self", presence: self.presence }] : []),
-    ...others
-      .filter((other) => other.presence?.name)
-      .map((other) => ({
-        connectionId: other.connectionId,
-        presence: other.presence,
-      })),
-  ];
+  if (authenticatedOthers.length === 0) {
+    return null;
+  }
 
-  const handleAvatarClick = (presence: any) => {
+  const handleAvatarClick = (e: React.MouseEvent, presence: any) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (presence?.cursor) {
+      // Faz o scroll suave até a posição do cursor
       window.scrollTo({
-        top: presence.cursor.y - window.innerHeight / 2,
-        left: presence.cursor.x - window.innerWidth / 2,
-        behavior: "smooth",
+        top: presence.cursor.y - (window.innerHeight / 2), // Centraliza o cursor na tela
+        left: presence.cursor.x - (window.innerWidth / 2),
+        behavior: 'smooth' // Faz o scroll ser suave
       });
 
-      // Dispara um evento customizado para animação no cursor se necessário
+      // Dispara um evento customizado para animação no cursor
       const event = new CustomEvent("cursor-ping", {
         detail: { x: presence.cursor.x, y: presence.cursor.y },
       });
@@ -40,16 +37,17 @@ export function PresenceBar() {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+    <div className="flex items-center gap-2 px-2 py-1">
       <AvatarGroup>
-        {allUsers.map(({ connectionId, presence }) => (
+        {authenticatedOthers.map(({ connectionId, presence }) => (
           <Avatar
             key={connectionId}
-            className={`border-2 border-white ${
-              connectionId !== "self" ? "cursor-pointer hover:scale-110 transition-transform" : ""
-            }`}
-            onClick={() => connectionId !== "self" && handleAvatarClick(presence)}
+            className="border-2 border-white cursor-pointer hover:scale-110 transition-transform h-8 w-8"
+            onClick={(e) => handleAvatarClick(e, presence)}
           >
+            {presence?.avatar && (
+              <AvatarImage src={presence.avatar} alt={presence.name} />
+            )}
             <AvatarFallback
               className="text-white text-[10px] font-medium"
               style={{ backgroundColor: presence?.color || "#3b82f6" }}

@@ -13,9 +13,10 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Eye, EyeOff, Check, ShieldCheck, ShieldAlert } from "lucide-react"
+import { Eye, EyeOff, Check, ShieldCheck, ShieldAlert, Upload, X } from "lucide-react"
 import { toast } from "sonner"
 import { Progress } from "@/components/ui/progress"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface UserDialogProps {
   onUserAdded: () => void
@@ -25,6 +26,7 @@ interface UserDialogProps {
     nickname: string
     name: string | null
     email: string
+    image?: string | null
   }
 }
 
@@ -40,6 +42,7 @@ export function UserDialog({ onUserAdded, trigger, user }: UserDialogProps) {
     email: "",
     password: "",
     confirmPassword: "",
+    image: "",
   })
 
   useEffect(() => {
@@ -50,6 +53,7 @@ export function UserDialog({ onUserAdded, trigger, user }: UserDialogProps) {
         email: user.email,
         password: "",
         confirmPassword: "",
+        image: user.image || "",
       })
     } else if (!user && open) {
       setFormData({
@@ -58,6 +62,7 @@ export function UserDialog({ onUserAdded, trigger, user }: UserDialogProps) {
         email: "",
         password: "",
         confirmPassword: "",
+        image: "",
       })
     }
   }, [user, open])
@@ -80,6 +85,22 @@ export function UserDialog({ onUserAdded, trigger, user }: UserDialogProps) {
     "bg-green-500",
     "bg-green-600",
   ]
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("A imagem deve ter no máximo 2MB")
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, image: reader.result as string }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -110,7 +131,8 @@ export function UserDialog({ onUserAdded, trigger, user }: UserDialogProps) {
           nickname: formData.nickname,
           name: formData.name,
           email: formData.email,
-          password: formData.password || undefined,
+          password: formData.password.trim() || undefined,
+          image: formData.image,
         }),
       })
 
@@ -158,6 +180,42 @@ export function UserDialog({ onUserAdded, trigger, user }: UserDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="flex flex-col items-center gap-4 mb-4">
+            <div className="relative group">
+              <Avatar className="h-24 w-24 border-2 border-muted">
+                <AvatarImage src={formData.image} />
+                <AvatarFallback className="text-xl">
+                  {formData.nickname?.substring(0, 2).toUpperCase() || "US"}
+                </AvatarFallback>
+              </Avatar>
+              <Label
+                htmlFor="image-upload"
+                className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full"
+              >
+                <Upload size={20} />
+              </Label>
+              {formData.image && (
+                <button
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, image: "" }))}
+                  className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-1 shadow-sm"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+            <Input
+              id="image-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+            <p className="text-[10px] text-muted-foreground text-center">
+              PNG, JPG ou WEBP. Máx 2MB.
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="nickname">Nickname</Label>
@@ -195,7 +253,9 @@ export function UserDialog({ onUserAdded, trigger, user }: UserDialogProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="password">Senha {user && "(deixe em branco para manter)"}</Label>
+              <Label htmlFor="password">
+                {user ? "Nova Senha (opcional)" : "Senha"}
+              </Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -203,6 +263,7 @@ export function UserDialog({ onUserAdded, trigger, user }: UserDialogProps) {
                   value={formData.password}
                   onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
                   required={!user}
+                  placeholder={user ? "Deixe vazio para manter" : "Digite a senha"}
                 />
                 <button
                   type="button"
@@ -214,14 +275,17 @@ export function UserDialog({ onUserAdded, trigger, user }: UserDialogProps) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar {user && "Senha"}</Label>
+              <Label htmlFor="confirmPassword">
+                {user ? "Confirmar Nova Senha" : "Confirmar Senha"}
+              </Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                  required={!user && formData.password.length > 0}
+                  required={!user || formData.password.length > 0}
+                  placeholder={user ? "Deixe vazio para manter" : "Confirme a senha"}
                 />
                 <button
                   type="button"

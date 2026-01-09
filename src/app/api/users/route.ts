@@ -26,7 +26,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { nickname, name, email, password } = await req.json()
+    const { nickname, name, email, password, image } = await req.json()
 
     if (!nickname || !email || !password) {
       return NextResponse.json({ error: "Nickname, email e senha são obrigatórios" }, { status: 400 })
@@ -48,6 +48,7 @@ export async function POST(req: Request) {
         name,
         email,
         password: hashedPassword,
+        image,
       }
     })
 
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
-    const { id, nickname, name, email, password } = await req.json()
+    const { id, nickname, name, email, password, image } = await req.json()
 
     if (!id || !nickname || !email) {
       return NextResponse.json({ error: "ID, nickname e email são obrigatórios" }, { status: 400 })
@@ -98,9 +99,10 @@ export async function PUT(req: Request) {
       nickname,
       name,
       email,
+      image,
     }
 
-    if (password) {
+    if (password && typeof password === 'string' && password.trim().length > 0) {
       data.password = await bcrypt.hash(password, 10)
     }
 

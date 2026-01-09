@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useMyPresence, useOthers } from "../../liveblocks.config";
 import { MousePointer2 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function LiveCursors() {
   const [{ cursor }, updateMyPresence] = useMyPresence();
@@ -27,9 +28,15 @@ export function LiveCursors() {
         .then((res) => res.json())
         .then((data) => {
           if (!data.error) {
-            updateMyPresence({ name: data.nickname || data.name || "Usuário" });
+            updateMyPresence({ 
+              name: data.nickname || data.name || "Usuário",
+              avatar: data.image || session?.user?.image 
+            });
           } else if (session?.user?.name) {
-            updateMyPresence({ name: session.user.name });
+            updateMyPresence({ 
+              name: session.user.name,
+              avatar: session.user.image
+            });
           }
         })
         .catch((err) => {
@@ -100,9 +107,15 @@ export function LiveCursors() {
               }}
             />
             <div 
-              className="ml-3 px-2 py-0.5 text-white text-[10px] font-semibold rounded-full rounded-tl-none whitespace-nowrap shadow-sm"
+              className="ml-3 px-1 py-1 text-white text-[10px] font-semibold rounded-full rounded-tl-none whitespace-nowrap shadow-sm flex items-center gap-1.5 pr-2"
               style={{ backgroundColor: presence.color || "#3b82f6" }}
             >
+              <Avatar className="h-4 w-4 border-none">
+                <AvatarImage src={(presence as any).avatar} />
+                <AvatarFallback className="text-[8px] bg-transparent text-white">
+                  {presence.name?.substring(0, 1).toUpperCase() || "C"}
+                </AvatarFallback>
+              </Avatar>
               {presence.name || "Convidado"}
             </div>
           </div>

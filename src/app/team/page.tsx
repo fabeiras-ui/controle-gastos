@@ -4,6 +4,11 @@ import { useEffect, useState } from "react"
 import { Plus, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar"
+import {
   Table,
   TableBody,
   TableCell,
@@ -69,6 +74,7 @@ export default function TeamPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[80px]">Avatar</TableHead>
               <TableHead>Nickname</TableHead>
               <TableHead>Nome Completo</TableHead>
               <TableHead>Email</TableHead>
@@ -80,6 +86,7 @@ export default function TeamPage() {
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
+                  <TableCell><Skeleton className="h-10 w-10 rounded-full" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
@@ -89,13 +96,21 @@ export default function TeamPage() {
               ))
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
                   Nenhum usuário encontrado.
                 </TableCell>
               </TableRow>
             ) : (
               users.map((user) => (
                 <TableRow key={user.id}>
+                  <TableCell>
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user.image || undefined} alt={user.nickname} />
+                      <AvatarFallback>
+                        {user.nickname.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TableCell>
                   <TableCell className="font-medium">{user.nickname}</TableCell>
                   <TableCell>{user.name || "-"}</TableCell>
                   <TableCell>{user.email}</TableCell>

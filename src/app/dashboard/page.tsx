@@ -131,7 +131,7 @@ function DashboardContent() {
 	})
 
 	return (
-		<div className="p-8 space-y-8 min-h-screen">
+		<div className="p-8 space-y-8">
 			<div className="flex justify-between items-center">
 				<div className="flex items-center gap-4">
 					<h1 className="text-2xl font-bold">Painel de Controle</h1>

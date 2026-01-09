@@ -9,6 +9,7 @@ type Presence = {
   cursor: { x: number; y: number } | null;
   name: string;
   color: string;
+  avatar?: string | null;
 };
 
 type Storage = {

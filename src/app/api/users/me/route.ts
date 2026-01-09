@@ -13,6 +13,7 @@ export async function GET() {
         nickname: true,
         name: true,
         email: true,
+        image: true,
       },
     })
 

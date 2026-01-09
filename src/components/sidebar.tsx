@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
+import { PresenceBar } from "@/components/PresenceBar"
 import {
   Sidebar,
   SidebarContent,
@@ -57,7 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             setUserData({
               name: data.nickname || data.name || "Usuário",
               email: data.email,
-              avatar: ""
+              avatar: data.image || ""
             })
           }
         })
@@ -74,7 +75,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = userData || {
     name: session?.user?.name || "Usuário",
     email: session?.user?.email || "",
-    avatar: "",
+    avatar: session?.user?.image || "",
   }
 
   // Prevenir erros de hidratação garantindo que o conteúdo que depende da sessão
@@ -133,6 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        <PresenceBar />
         {!isLoading && <NavUser user={user} />}
       </SidebarFooter>
     </Sidebar>
