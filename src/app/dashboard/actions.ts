@@ -185,6 +185,7 @@ export async function updateExpenseCategory(expenseId: number, categoryId: numbe
       }
     }
 
+    revalidatePath("/dashboard")
     return { success: true, data: updatedExpense }
   } catch (error) {
     console.error("Erro ao atualizar categoria da despesa:", error)
@@ -304,10 +305,10 @@ export async function updateExpense(id: number, data: {
     // Buscar a despesa original ANTES do update para comparar a descrição
     const originalExpense = await prisma.expense.findUnique({ where: { id } })
     
-    // Normalizar a data para evitar problemas de fuso horário (meio-dia)
+    // Normalizar a data para evitar problemas de fuso horário (meio-dia UTC)
     let normalizedVencimento = data.vencimento ? new Date(data.vencimento) : undefined
     if (normalizedVencimento) {
-      normalizedVencimento.setHours(12, 0, 0, 0)
+      normalizedVencimento.setUTCHours(12, 0, 0, 0)
     }
 
     // Sync responsavel se vier do formulário ou de edições que não passam o nickname explicitamente
@@ -343,15 +344,28 @@ export async function updateExpense(id: number, data: {
         ? data.parcelaAtual - originalExpense.parcelaAtual 
         : 0;
 
-      // Atualizar todas as despesas que têm a mesma descrição e pertencem ao mesmo usuário
+      // Buscar irmãos (despesas com a mesma descrição base)
+      // Remover sufixo de parcela da descrição para encontrar todos os irmãos
+      // Ex: "Itaú (1/12)" -> "Itaú"
+      const baseDescricao = originalExpense.descricao.replace(/\s\(\d+\/\d+\)$/, "");
+
       const siblings = await prisma.expense.findMany({
         where: { 
-          descricao: originalExpense.descricao,
+          descricao: {
+            startsWith: baseDescricao
+          },
           userId: originalExpense.userId
         }
       });
 
       for (const sibling of siblings) {
+        // Verificar se é realmente um irmão (mesma base ou padrão de parcela)
+        const siblingBase = sibling.descricao.replace(/\s\(\d+\/\d+\)$/, "");
+        if (siblingBase !== baseDescricao) continue;
+
+        // Pular a própria despesa que já foi atualizada acima
+        if (sibling.id === id) continue;
+
         let newParcelaAtual = sibling.parcelaAtual;
         if (parcelaDiff !== 0 && sibling.parcelaAtual !== null) {
           newParcelaAtual = sibling.parcelaAtual + parcelaDiff;
@@ -422,7 +436,7 @@ export async function updateExpenseReal(id: number, real: number) {
 export async function updateExpenseVencimento(id: number, vencimento: Date) {
   try {
     const normalizedVencimento = new Date(vencimento)
-    normalizedVencimento.setHours(12, 0, 0, 0)
+    normalizedVencimento.setUTCHours(12, 0, 0, 0)
     
     const updatedExpense = await prisma.expense.update({
       where: { id },

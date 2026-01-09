@@ -17,11 +17,11 @@ export default function Home() {
   const router = useRouter()
   const { status } = useSession()
 
-  // useEffect(() => {
-  //   if (status === "authenticated") {
-  //     router.push("/dashboard")
-  //   }
-  // }, [status, router])
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/dashboard")
+    }
+  }, [status, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,8 +36,7 @@ export default function Home() {
     if (result?.error) {
       setError("Email ou senha inválidos")
     } else {
-      router.push("/dashboard") // Ou para onde o usuário deve ir após o login
-      router.refresh()
+      window.location.href = "/dashboard"
     }
   }
 
