@@ -18,6 +18,7 @@ import {Input} from "@/components/ui/input"
 import {MultiSelect} from "@/components/ui/multi-select"
 import {MonthYearCalendar} from "@/components/ui/month-year-calendar"
 import {Filter, Search} from "lucide-react"
+import { cn } from "@/lib/utils"
 
 function DashboardContent() {
 	const router = useRouter()
@@ -238,6 +239,7 @@ function DashboardContent() {
 										variant={chartFilter === "1year" ? "outline" : "ghost"}
 										size="sm"
 										onClick={() => setChartFilter("1year")}
+										className={cn("rounded-4xl", chartFilter === "1year" && "bg-blue-50 border-blue-200 text-blue-900 hover:bg-blue-100 hover:border-blue-300")}
 									>
 										Último Ano
 									</Button>
@@ -245,6 +247,7 @@ function DashboardContent() {
 										variant={chartFilter === "6months" ? "outline" : "ghost"}
 										size="sm"
 										onClick={() => setChartFilter("6months")}
+										className={cn("rounded-4xl", chartFilter === "6months" && "bg-blue-50 border-blue-200 text-blue-900 hover:bg-blue-100 hover:border-blue-300")}
 									>
 										Últimos 6 meses
 									</Button>
@@ -252,6 +255,7 @@ function DashboardContent() {
 										variant={chartFilter === "30days" ? "outline" : "ghost"}
 										size="sm"
 										onClick={() => setChartFilter("30days")}
+										className={cn("rounded-4xl", chartFilter === "30days" && "bg-blue-50 border-blue-200 text-blue-900 hover:bg-blue-100 hover:border-blue-300")}
 									>
 										Últimos 30 dias
 									</Button>
@@ -399,14 +403,20 @@ function DashboardContent() {
 									options={allStatuses.map(s => ({ label: s, value: s }))}
 									selected={selectedStatuses}
 									onChange={setSelectedStatuses}
+									width="w-[160px]"
 								/>
 
 								<MultiSelect
 									label="Categoria"
 									icon={Filter}
-									options={allCategories.map(c => ({ label: c.name, value: c.id.toString() }))}
+									options={allCategories.map(c => ({ 
+										label: c.name, 
+										value: c.id.toString(),
+										icon: (c as any).icon 
+									}))}
 									selected={selectedCategories}
 									onChange={setSelectedCategories}
+									disableScroll
 								/>
 
 								<div className="flex items-center gap-2 ml-2">
