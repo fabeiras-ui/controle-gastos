@@ -2,12 +2,11 @@
 import { revalidatePath } from "next/cache"
 import prisma from "@/lib/prisma"
 import { getServerSession } from "next-auth"
-import { authOptions } from "../api/auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth"
 
 export async function getExpensesByMonth(month: number, year: number) {
-  // const session = await getServerSession(authOptions)
-  // if (!session?.user?.email) return []
-  const userEmail = "admin@home.com"
+  const session = await getServerSession(authOptions)
+  const userEmail = session?.user?.email || "admin@home.com"
 
   // Define o início e o fim do mês em UTC para evitar problemas de fuso horário
   const startDate = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0))
@@ -336,19 +335,39 @@ export async function updateExpense(id: number, data: {
     // Também replicamos a categoria (typeId) se ela foi alterada
     if (originalExpense && (
       (data.descricao && originalExpense.descricao !== data.descricao) || 
-      (typeId !== undefined && originalExpense.typeId !== typeId)
+      (typeId !== undefined && originalExpense.typeId !== typeId) ||
+      (data.totalParcelas !== undefined && originalExpense.totalParcelas !== data.totalParcelas) ||
+      (data.parcelaAtual !== undefined && originalExpense.parcelaAtual !== data.parcelaAtual)
     )) {
+      // Se apenas a parcela mudou, calculamos o deslocamento para atualizar as outras
+      const parcelaDiff = (data.parcelaAtual !== undefined && originalExpense.parcelaAtual !== null) 
+        ? data.parcelaAtual - originalExpense.parcelaAtual 
+        : 0;
+
       // Atualizar todas as despesas que têm a mesma descrição e pertencem ao mesmo usuário
-      await prisma.expense.updateMany({
+      const siblings = await prisma.expense.findMany({
         where: { 
           descricao: originalExpense.descricao,
           userId: originalExpense.userId
-        },
-        data: { 
-          ...(data.descricao ? { descricao: data.descricao } : {}),
-          ...(typeId !== undefined ? { typeId } : {})
         }
-      })
+      });
+
+      for (const sibling of siblings) {
+        let newParcelaAtual = sibling.parcelaAtual;
+        if (parcelaDiff !== 0 && sibling.parcelaAtual !== null) {
+          newParcelaAtual = sibling.parcelaAtual + parcelaDiff;
+        }
+
+        await prisma.expense.update({
+          where: { id: sibling.id },
+          data: {
+            ...(data.descricao ? { descricao: data.descricao } : {}),
+            ...(typeId !== undefined ? { typeId } : {}),
+            ...(data.totalParcelas !== undefined ? { totalParcelas: data.totalParcelas } : {}),
+            ...(parcelaDiff !== 0 ? { parcelaAtual: newParcelaAtual } : {})
+          }
+        });
+      }
 
       // Se o nome mudou ou a categoria mudou, e essa despesa tem um tipo associado, 
       // atualizamos o ExpenseType correspondente para refletir o novo nome e nova categoria.
