@@ -1,5 +1,8 @@
 "use client"
 
+import {
+  SidebarMenuButton,
+} from "@/components/ui/sidebar"
 import { useState, useEffect } from "react"
 import {
   Dialog,
@@ -171,14 +174,20 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
     return acc
   }, {})
 
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger 
         render={
           trigger || (
-            <Button variant="ghost" size="icon">
-              <Settings className="h-5 w-5" />
-            </Button>
+            <SidebarMenuButton 
+              tooltip="Configurações"
+              isActive={pathname === "/settings"}
+            >
+              <Settings />
+              <span>Configurações</span>
+            </SidebarMenuButton>
           )
         }
       />

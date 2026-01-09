@@ -81,6 +81,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // seja consistente entre servidor e cliente no primeiro render
   const isLoading = !mounted
 
+  if (!mounted) {
+    return null
+  }
+
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -122,17 +126,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 )
               })}
               <SidebarMenuItem>
-                <SettingsDialog 
-                  trigger={
-                    <SidebarMenuButton 
-                      tooltip="Configurações"
-                      isActive={pathname === "/settings"}
-                    >
-                      <Settings />
-                      <span>Configurações</span>
-                    </SidebarMenuButton>
-                  }
-                />
+                <SettingsDialog />
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
