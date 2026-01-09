@@ -1,8 +1,10 @@
 "use server"
 import prisma from "@/lib/prisma"
+import { requireUser } from "@/lib/auth-utils"
 
 export async function getCategorySpending(month: number, year: number) {
   try {
+    const user = await requireUser()
     const startDate = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0))
     const endDate = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999))
 

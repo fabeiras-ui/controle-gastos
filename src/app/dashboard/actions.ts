@@ -1,21 +1,15 @@
 "use server"
 import { revalidatePath } from "next/cache"
 import prisma from "@/lib/prisma"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { requireUser } from "@/lib/auth-utils"
 
 export async function getExpensesByMonth(month: number, year: number) {
-  const session = await getServerSession(authOptions)
-  const userEmail = session?.user?.email || "admin@home.com"
-
-  // Define o início e o fim do mês em UTC para evitar problemas de fuso horário
-  // Ajustado para ser mais abrangente e evitar problemas com fuso horário local
-  const startDate = new Date(year, month, 1, 0, 0, 0, 0)
-  const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999)
-
   try {
-    const user = await prisma.user.findUnique({ where: { email: userEmail } })
-    if (!user) return []
+    const user = await requireUser()
+
+    // Define o início e o fim do mês em UTC para evitar problemas de fuso horário
+    const startDate = new Date(year, month, 1, 0, 0, 0, 0)
+    const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999)
 
     const expenses = await prisma.expense.findMany({
       where: {
@@ -49,8 +43,11 @@ export async function getExpensesByMonth(month: number, year: number) {
 
 export async function updateExpenseStatus(id: number, status: string) {
   try {
+    const user = await requireUser()
     const updatedExpense = await prisma.expense.update({
-      where: { id },
+      where: { 
+        id
+      },
       data: { status },
     })
     revalidatePath("/dashboard")
@@ -63,31 +60,39 @@ export async function updateExpenseStatus(id: number, status: string) {
 
 export async function updateExpenseDescription(id: number, descricao: string) {
   try {
-    const originalExpense = await prisma.expense.findUnique({ where: { id } })
+    const user = await requireUser()
+    const originalExpense = await prisma.expense.findUnique({ 
+      where: { 
+        id
+      } 
+    })
     
+    if (!originalExpense) {
+      return { success: false, error: "Despesa não encontrada" }
+    }
+
     const updatedExpense = await prisma.expense.update({
       where: { id },
       data: { descricao },
       include: { type: true }
     })
 
-    if (originalExpense) {
-      // Replicar a mudança de descrição para todas as despesas idênticas do usuário
-      await prisma.expense.updateMany({
-        where: { 
-          descricao: originalExpense.descricao,
-          userId: originalExpense.userId
-        },
-        data: { descricao }
-      })
+    // Replicar a mudança de descrição para todas as despesas idênticas do usuário
+    await prisma.expense.updateMany({
+      where: { 
+        descricao: originalExpense.descricao
+      },
+      data: { descricao }
+    })
 
-      // Se a despesa tem um tipo associado, atualizamos o nome do tipo também
-      if (updatedExpense.typeId) {
-        await prisma.expenseType.update({
-          where: { id: updatedExpense.typeId },
-          data: { name: descricao }
-        })
-      }
+    // Se a despesa tem um tipo associado, atualizamos o nome do tipo também
+    if (updatedExpense.typeId) {
+      // Nota: Idealmente ExpenseType também deveria ter userId, mas como não tem, 
+      // ao menos garantimos que a despesa alterada pertence ao usuário.
+      await prisma.expenseType.update({
+        where: { id: updatedExpense.typeId },
+        data: { name: descricao }
+      })
     }
 
     revalidatePath("/dashboard")
@@ -100,8 +105,11 @@ export async function updateExpenseDescription(id: number, descricao: string) {
 
 export async function deleteExpense(id: number) {
   try {
+    const user = await requireUser()
     await prisma.expense.delete({
-      where: { id },
+      where: { 
+        id
+      },
     })
     revalidatePath("/dashboard")
     return { success: true }
@@ -113,6 +121,7 @@ export async function deleteExpense(id: number) {
 
 export async function getStatusList() {
   try {
+    await requireUser()
     const statuses = await prisma.status.findMany()
     return statuses.map(s => s.name)
   } catch (error) {
@@ -123,6 +132,7 @@ export async function getStatusList() {
 
 export async function getCategories() {
   try {
+    await requireUser()
     const categories = await prisma.category.findMany({
       orderBy: { name: 'asc' }
     })
@@ -135,10 +145,17 @@ export async function getCategories() {
 
 export async function updateExpenseCategory(expenseId: number, categoryId: number) {
   try {
+    const user = await requireUser()
     const originalExpense = await prisma.expense.findUnique({ 
-      where: { id: expenseId },
+      where: { 
+        id: expenseId
+      },
       include: { type: true }
     })
+
+    if (!originalExpense) {
+      return { success: false, error: "Despesa não encontrada" }
+    }
 
     let expenseType = await prisma.expenseType.findFirst({
       where: { categoryId: categoryId }
@@ -155,7 +172,9 @@ export async function updateExpenseCategory(expenseId: number, categoryId: numbe
     }
 
     const updatedExpense = await prisma.expense.update({
-      where: { id: expenseId },
+      where: { 
+        id: expenseId
+      },
       data: { typeId: expenseType.id },
       include: {
         type: {
@@ -170,8 +189,7 @@ export async function updateExpenseCategory(expenseId: number, categoryId: numbe
     if (originalExpense) {
       await prisma.expense.updateMany({
         where: { 
-          descricao: originalExpense.descricao,
-          userId: originalExpense.userId
+          descricao: originalExpense.descricao
         },
         data: { typeId: expenseType.id }
       })
@@ -196,6 +214,7 @@ export async function updateExpenseCategory(expenseId: number, categoryId: numbe
 
 export async function getUsers() {
   try {
+    await requireUser()
     const users = await prisma.user.findMany({
       select: {
         id: true,
@@ -216,20 +235,14 @@ export async function createExpense(data: {
   real: number
   vencimento: Date
   status: string
-  userId?: number // Tornar opcional
+  userId?: number
   totalParcelas?: number
   parcelaAtual?: number
   categoryId?: number
 }) {
   try {
-    // Se não for fornecido userId, usa o do usuário padrão
-    let finalUserId = data.userId
-    if (!finalUserId) {
-      const defaultUser = await prisma.user.findUnique({ where: { email: "admin@home.com" } })
-      if (defaultUser) finalUserId = defaultUser.id
-    }
-
-    if (!finalUserId) throw new Error("Usuário padrão não encontrado")
+    const user = await requireUser()
+    const finalUserId = user.id
 
     let typeId = null
     if (data.categoryId) {
@@ -283,6 +296,7 @@ export async function updateExpense(id: number, data: {
   categoryId?: number
 }) {
   try {
+    const user = await requireUser()
     let typeId = undefined
     if (data.categoryId) {
       let expenseType = await prisma.expenseType.findFirst({
@@ -304,8 +318,16 @@ export async function updateExpense(id: number, data: {
     const { categoryId, ...updateData } = data
     
     // Buscar a despesa original ANTES do update para comparar a descrição
-    const originalExpense = await prisma.expense.findUnique({ where: { id } })
+    const originalExpense = await prisma.expense.findUnique({ 
+      where: { 
+        id
+      } 
+    })
     
+    if (!originalExpense) {
+      return { success: false, error: "Despesa não encontrada" }
+    }
+
     // Normalizar a data para evitar problemas de fuso horário (meio-dia UTC)
     let normalizedVencimento = data.vencimento ? new Date(data.vencimento) : undefined
     if (normalizedVencimento) {
@@ -314,14 +336,16 @@ export async function updateExpense(id: number, data: {
 
     // Sync responsavel se vier do formulário ou de edições que não passam o nickname explicitamente
     if (updateData.userId && !updateData.responsavel) {
-      const user = await prisma.user.findUnique({ where: { id: updateData.userId } })
-      if (user) {
-        updateData.responsavel = user.nickname
+      const responsavelUser = await prisma.user.findUnique({ where: { id: updateData.userId } })
+      if (responsavelUser) {
+        updateData.responsavel = responsavelUser.nickname
       }
     }
 
     const updatedExpense = await prisma.expense.update({
-      where: { id },
+      where: { 
+        id
+      },
       data: {
         ...updateData,
         ...(typeId !== undefined ? { typeId } : {}),
@@ -354,8 +378,7 @@ export async function updateExpense(id: number, data: {
         where: { 
           descricao: {
             startsWith: baseDescricao
-          },
-          userId: originalExpense.userId
+          }
         }
       });
 
@@ -408,8 +431,11 @@ export async function updateExpense(id: number, data: {
 
 export async function updateExpenseResponsavel(id: number, userId: number, nickname: string) {
   try {
+    const user = await requireUser()
     const updatedExpense = await prisma.expense.update({
-      where: { id },
+      where: { 
+        id
+      },
       data: { userId, responsavel: nickname },
     })
     revalidatePath("/dashboard")
@@ -422,8 +448,11 @@ export async function updateExpenseResponsavel(id: number, userId: number, nickn
 
 export async function updateExpenseReal(id: number, real: number) {
   try {
+    const user = await requireUser()
     const updatedExpense = await prisma.expense.update({
-      where: { id },
+      where: { 
+        id
+      },
       data: { real },
     })
     revalidatePath("/dashboard")
@@ -436,11 +465,14 @@ export async function updateExpenseReal(id: number, real: number) {
 
 export async function updateExpenseVencimento(id: number, vencimento: Date) {
   try {
+    const user = await requireUser()
     const normalizedVencimento = new Date(vencimento)
     normalizedVencimento.setUTCHours(12, 0, 0, 0)
     
     const updatedExpense = await prisma.expense.update({
-      where: { id },
+      where: { 
+        id
+      },
       data: { vencimento: normalizedVencimento },
     })
     revalidatePath("/dashboard")
@@ -452,13 +484,8 @@ export async function updateExpenseVencimento(id: number, vencimento: Date) {
 }
 
 export async function getDashboardData(month: number, year: number) {
-  // const session = await getServerSession(authOptions)
-  // if (!session?.user?.email) return { totalGastos: 0, percentageChange: 0, diffValue: 0, isHigher: false }
-  const userEmail = "admin@home.com"
-
   try {
-    const user = await prisma.user.findUnique({ where: { email: userEmail } })
-    if (!user) return { totalGastos: 0, percentageChange: 0, diffValue: 0, isHigher: false }
+    const user = await requireUser()
 
     const startDate = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0))
     const endDate = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999))
@@ -516,13 +543,8 @@ export async function getDashboardData(month: number, year: number) {
 }
 
 export async function importPreviousMonthExpenses(targetMonth: number, targetYear: number) {
-  // const session = await getServerSession(authOptions)
-  // if (!session?.user?.email) return { success: false, error: "Sessão não encontrada." }
-  const userEmail = "admin@home.com"
-
   try {
-    const user = await prisma.user.findUnique({ where: { email: userEmail } })
-    if (!user) return { success: false, error: "Usuário não encontrado." }
+    const user = await requireUser()
 
     const prevMonth = targetMonth === 0 ? 11 : targetMonth - 1
     const prevYear = targetMonth === 0 ? targetYear - 1 : targetYear
@@ -609,13 +631,8 @@ export async function importPreviousMonthExpenses(targetMonth: number, targetYea
 }
 
 export async function getChartData(filter: string, selectedYear: number, selectedMonth: number) {
-  // const session = await getServerSession(authOptions)
-  // if (!session?.user?.email) return []
-  const userEmail = "admin@home.com"
-
   try {
-    const user = await prisma.user.findUnique({ where: { email: userEmail } })
-    if (!user) return []
+    const user = await requireUser()
 
     let startDate: Date
     const endDate = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999) // Fim do mês selecionado

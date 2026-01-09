@@ -1,15 +1,13 @@
 import prisma from "@/lib/prisma"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { requireUser } from "@/lib/auth-utils"
 import { NextResponse } from "next/server"
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    const userEmail = session?.user?.email || "admin@home.com"
+    const user = await requireUser()
 
-    const user = await prisma.user.findUnique({
-      where: { email: userEmail },
+    const userData = await prisma.user.findUnique({
+      where: { id: user.id },
       select: {
         id: true,
         nickname: true,
@@ -18,13 +16,16 @@ export async function GET() {
       },
     })
 
-    if (!user) {
+    if (!userData) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    return NextResponse.json(user)
+    return NextResponse.json(userData)
   } catch (error) {
     console.error("Error fetching user profile:", error)
+    if (error instanceof Error && error.message.includes("Não autorizado")) {
+      return NextResponse.json({ error: error.message }, { status: 401 })
+    }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -2,10 +2,12 @@
 
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
+import { requireUser } from "@/lib/auth-utils"
 
 // Category Actions
 export async function getCategories() {
   try {
+    await requireUser()
     return await prisma.category.findMany({
       orderBy: { name: 'asc' },
       include: {
@@ -22,6 +24,7 @@ export async function getCategories() {
 
 export async function createCategory(data: { name: string, icon?: string }) {
   try {
+    await requireUser()
     const category = await prisma.category.create({
       data
     })
@@ -35,6 +38,7 @@ export async function createCategory(data: { name: string, icon?: string }) {
 
 export async function deleteCategory(id: number) {
   try {
+    await requireUser()
     const count = await prisma.expenseType.count({
       where: { categoryId: id }
     })
@@ -53,6 +57,7 @@ export async function deleteCategory(id: number) {
 // Expense Type Actions
 export async function getExpenseTypes() {
   try {
+    await requireUser()
     return await prisma.expenseType.findMany({
       orderBy: [
         { categoryRef: { name: 'asc' } },
@@ -73,6 +78,7 @@ export async function getExpenseTypes() {
 
 export async function createExpenseType(data: { name: string, categoryId: number, isActive: boolean }) {
   try {
+    await requireUser()
     const expenseType = await prisma.expenseType.create({
       data
     })
@@ -86,6 +92,7 @@ export async function createExpenseType(data: { name: string, categoryId: number
 
 export async function deleteExpenseType(id: number) {
   try {
+    await requireUser()
     // Verificar se existem despesas atreladas
     const count = await prisma.expense.count({
       where: { typeId: id }
@@ -108,6 +115,7 @@ export async function deleteExpenseType(id: number) {
 
 export async function updateExpenseTypeStatus(id: number, isActive: boolean) {
   try {
+    await requireUser()
     await prisma.expenseType.update({
       where: { id },
       data: { isActive }
@@ -123,6 +131,7 @@ export async function updateExpenseTypeStatus(id: number, isActive: boolean) {
 // Status Actions
 export async function getStatuses() {
   try {
+    await requireUser()
     return await prisma.status.findMany({
       orderBy: { name: 'asc' },
       include: {
@@ -139,6 +148,7 @@ export async function getStatuses() {
 
 export async function createStatus(name: string) {
   try {
+    await requireUser()
     const status = await prisma.status.create({
       data: { name }
     })
@@ -152,6 +162,7 @@ export async function createStatus(name: string) {
 
 export async function deleteStatus(id: number) {
   try {
+    await requireUser()
     // Verificar se existem despesas atreladas
     const count = await prisma.expense.count({
       where: { statusId: id }
