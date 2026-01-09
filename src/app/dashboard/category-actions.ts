@@ -27,10 +27,10 @@ export async function getCategorySpending(month: number, year: number) {
     let grandTotal = 0
 
     const colors = [
-      '#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#8b5cf6', 
-      '#6366f1', '#3b82f6', '#0ea5e9', '#06b6d4', '#14b8a6', 
-      '#10b981', '#22c55e', '#84cc16', '#eab308', '#f59e0b', 
-      '#f97316', '#ef4444'
+      '#3b82f6', '#ef4444', '#10b981', '#eab308', '#8b5cf6', 
+      '#f97316', '#06b6d4', '#ec4899', '#6366f1', '#f43f5e', 
+      '#14b8a6', '#f59e0b', '#d946ef', '#a855f7', '#0ea5e9', 
+      '#22c55e', '#84cc16'
     ]
 
     const getDeterministicColor = (name: string) => {

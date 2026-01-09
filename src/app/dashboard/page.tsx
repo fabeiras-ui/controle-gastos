@@ -185,7 +185,7 @@ function DashboardContent() {
 						<CardHeader>
 							<div className="flex justify-between items-center">
 								<div>
-									<CardTitle className="text-lg font-bold">Gastos ao longo do tempo</CardTitle>
+									<CardTitle className="text-lg font-bold">Evolução dos Gastos</CardTitle>
 									<p className="text-sm text-zinc-500">
 										{(() => {
 											if (chartFilter === "30days") {
@@ -238,14 +238,38 @@ function DashboardContent() {
 						<CardContent>
 							<div className="h-[300px] w-full">
 								<ResponsiveContainer width="100%" height="100%">
-									<LineChart data={chartData} margin={{top: 10, right: 30, left: 0, bottom: 0}}>
+									<LineChart data={chartData} margin={{top: 10, right: 10, left: 10, bottom: 0}}>
 										<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)"/>
 										<XAxis
 											dataKey="name"
 											axisLine={false}
 											tickLine={false}
-											tick={{fill: 'var(--muted-foreground)', fontSize: 12}}
-											dy={10}
+											tick={({ x, y, payload, index }) => {
+												const totalPoints = chartData.length;
+												const showTick = chartFilter === "30days" 
+													? (index % 2 === 0 || index === totalPoints - 1)
+													: true;
+												
+												if (!showTick) return null;
+
+												return (
+													<g transform={`translate(${x},${y})`}>
+														<text
+															x={0}
+															y={0}
+															dy={10}
+															fill="var(--muted-foreground)"
+															fontSize={10}
+															textAnchor="middle"
+														>
+															{payload.value}
+														</text>
+													</g>
+												);
+											}}
+											height={30}
+											interval={0}
+											padding={{ left: 0, right: 0 }}
 										/>
 										<YAxis
 											hide
@@ -263,14 +287,14 @@ function DashboardContent() {
 													style: 'currency',
 													currency: 'BRL'
 												}).format(Number(value) || 0),
-												name === 'realizado' ? 'Pago' : 'Previsto'
+												name.toLowerCase() === 'realizado' ? 'Pago' : 'Previsto'
 											]}
 										/>
 										{showRealizado && (
 											<Line
 												type="monotone"
 												dataKey="realizado"
-												name="Realizado"
+												name="realizado"
 												stroke="#3b82f6"
 												strokeWidth={2}
 												dot={false}
@@ -281,7 +305,7 @@ function DashboardContent() {
 											<Line
 												type="monotone"
 												dataKey="previsto"
-												name="Previsto"
+												name="previsto"
 												stroke="#94a3b8"
 												strokeWidth={2}
 												strokeDasharray="5 5"
@@ -303,7 +327,7 @@ function DashboardContent() {
 										htmlFor="realizado"
 										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
 									>
-										Realizado
+										Pago
 									</label>
 								</div>
 								<div className="flex items-center gap-2">

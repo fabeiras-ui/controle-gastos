@@ -33,27 +33,27 @@ async function main() {
   }
   console.log("Status cadastrados.");
 
-  // Categorias com seus ícones
+  // Categorias com seus ícones e cores
   const categoriesData = [
-    { name: "Moradia", icon: "Home" },
-    { name: "Contas e Serviços Básicos", icon: "Zap" },
-    { name: "Alimentação", icon: "ShoppingCart" },
-    { name: "Transporte", icon: "Bus" },
-    { name: "Saúde", icon: "HeartPulse" },
-    { name: "Educação", icon: "GraduationCap" },
-    { name: "Lazer e Entretenimento", icon: "Gamepad2" },
-    { name: "Pessoal", icon: "Smile" },
-    { name: "Seguros e Proteção", icon: "ShieldCheck" },
-    { name: "Dívidas e Financiamentos", icon: "CreditCard" },
-    { name: "Outros / Variáveis", icon: "TrendingUp" },
+    { name: "Moradia", icon: "Home", color: "#3b82f6" }, // Blue 500
+    { name: "Contas e Serviços Básicos", icon: "Zap", color: "#eab308" }, // Yellow 500
+    { name: "Alimentação", icon: "ShoppingCart", color: "#ef4444" }, // Red 500
+    { name: "Transporte", icon: "Bus", color: "#8b5cf6" }, // Violet 500
+    { name: "Saúde", icon: "HeartPulse", color: "#10b981" }, // Emerald 500
+    { name: "Educação", icon: "GraduationCap", color: "#f97316" }, // Orange 500
+    { name: "Lazer e Entretenimento", icon: "Gamepad2", color: "#ec4899" }, // Pink 500
+    { name: "Pessoal", icon: "Smile", color: "#06b6d4" }, // Cyan 500
+    { name: "Seguros e Proteção", icon: "ShieldCheck", color: "#6366f1" }, // Indigo 500
+    { name: "Dívidas e Financiamentos", icon: "CreditCard", color: "#f43f5e" }, // Rose 500
+    { name: "Outros / Variáveis", icon: "TrendingUp", color: "#71717a" }, // Zinc 500
   ];
 
   const createdCategories: Record<string, any> = {};
   for (const cat of categoriesData) {
     createdCategories[cat.name] = await prisma.category.upsert({
       where: { name: cat.name },
-      update: { icon: cat.icon },
-      create: { name: cat.name, icon: cat.icon },
+      update: { icon: cat.icon, color: cat.color },
+      create: { name: cat.name, icon: cat.icon, color: cat.color },
     });
   }
   console.log("Categorias cadastradas.");
@@ -101,35 +101,35 @@ async function main() {
 
   // Despesas de Dezembro 2025
   const expenses = [
-    { descricao: "Financiamento AP303", responsavel: "Carolina Moreira", real: 1135.01, vencimento: new Date(2025, 11, 15), status: "Pago" },
-    { descricao: "Conta de luz - Ap 303", responsavel: "Carolina Moreira", real: 649.20, vencimento: new Date(2025, 11, 18), status: "Pago" },
-    { descricao: "IPTU", responsavel: "Carolina Moreira", real: 59.18, vencimento: new Date(2025, 11, 30), status: "Pago" },
-    { descricao: "Planejado Cozinha 11/23", responsavel: "Carolina Moreira", real: 317.00, vencimento: new Date(2025, 11, 12), status: "Pago" },
-    { descricao: "Condomínio - Ap 303", responsavel: "Fábio Moreira", real: 349.47, vencimento: new Date(2025, 11, 10), status: "Pago" },
-    { descricao: "Israel - Mesada", responsavel: "Carolina Moreira", real: 29.90, vencimento: new Date(2025, 11, 10), status: "Pago" },
-    { descricao: "Investimento", responsavel: "Carolina Moreira", real: 500.00, vencimento: new Date(2025, 11, 15), status: "Pendente" },
-    { descricao: "Condução - Israel", responsavel: "Carolina Moreira", real: 200.00, vencimento: new Date(2025, 11, 3), status: "Pago" },
-    { descricao: "Seguro Cartão Cred.", responsavel: "Carolina Moreira", real: 45.77, vencimento: new Date(2025, 11, 3), status: "Débito Aut." },
-    { descricao: "Seguro Samsung", responsavel: "Carolina Moreira", real: 43.77, vencimento: new Date(2025, 11, 3), status: "Débito Aut." },
-    { descricao: "Internet Tracecomm", responsavel: "Carolina Moreira", real: 99.90, vencimento: new Date(2025, 11, 22), status: "Pago" },
-    { descricao: "Itaú (23/48)", responsavel: "Carolina Moreira", real: 1439.69, vencimento: new Date(2025, 11, 1), status: "Pago", totalParcelas: 48, parcelaAtual: 23 },
-    { descricao: "Cartão de crédito (Nu)", responsavel: "Carolina Moreira", real: 746.46, vencimento: new Date(2025, 11, 2), status: "Pago" },
-    { descricao: "Cartão de Crédito (Itaú Carol)", responsavel: "Carolina Moreira", real: 1632.00, vencimento: new Date(2025, 11, 15), status: "Pago" },
-    { descricao: "Conta de Gás - Ap 303", responsavel: "Fábio Moreira", real: 70.85, vencimento: new Date(2025, 11, 5), status: "Pago" },
-    { descricao: "Cartão de Crédito (Itaú Black)", responsavel: "Carolina Moreira", real: 902.67, vencimento: new Date(2025, 11, 15), status: "Pago" },
-    { descricao: "C&A Pay", responsavel: "Carolina Moreira", real: 100.00, vencimento: new Date(2025, 11, 3), status: "Pago" },
-    { descricao: "IPTV", responsavel: "Fábio Moreira", real: 25.00, vencimento: new Date(2025, 11, 5), status: "" },
-    { descricao: "Cartão Uniclass (Itaú Fábio)", responsavel: "Fábio Moreira", real: 666.71, vencimento: new Date(2025, 11, 5), status: "Pago" },
-    { descricao: "Cartão de crédito (MP Fábio)", responsavel: "Fábio Moreira", real: 0.00, vencimento: new Date(2025, 11, 5), status: "Pago" },
-    { descricao: "Casa & Video", responsavel: "Carolina Moreira", real: 91.10, vencimento: new Date(2025, 11, 1), status: "Pago" },
-    { descricao: "Cartão de Click (Itaú Fábio)", responsavel: "Fábio Moreira", real: 0.00, vencimento: new Date(2025, 11, 8), status: "Cancelado" },
-    { descricao: "Internet TIM", responsavel: "Fábio Moreira", real: 139.99, vencimento: new Date(2025, 11, 7), status: "Pago" },
-    { descricao: "Planejado Cozinha 11/23", responsavel: "Fábio Moreira", real: 317.00, vencimento: new Date(2025, 11, 12), status: "Pago" },
-    { descricao: "Samsung pra sempre 6/21", responsavel: "Fábio Moreira", real: 220.00, vencimento: new Date(2025, 11, 15), status: "Pago", totalParcelas: 21, parcelaAtual: 6 },
-    { descricao: "Israel - Mesada", responsavel: "Fábio Moreira", real: 0.00, vencimento: new Date(2025, 11, 10), status: "" },
-    { descricao: "Investimento", responsavel: "Fábio Moreira", real: 0.00, vencimento: new Date(2025, 11, 15), status: "" },
-    { descricao: "Supermercado (1/2)", responsavel: "FAROL", real: 0.00, vencimento: new Date(2025, 11, 2), status: "", totalParcelas: 2, parcelaAtual: 1 },
-    { descricao: "Supermercado (2/2)", responsavel: "FAROL", real: 0.00, vencimento: new Date(2025, 11, 16), status: "", totalParcelas: 2, parcelaAtual: 2 },
+    { descricao: "Financiamento AP303", responsavel: "Carolina Moreira", real: 1135.01, vencimento: new Date(Date.UTC(2025, 11, 15, 12, 0, 0)), status: "Pago" },
+    { descricao: "Conta de luz - Ap 303", responsavel: "Carolina Moreira", real: 649.20, vencimento: new Date(Date.UTC(2025, 11, 18, 12, 0, 0)), status: "Pago" },
+    { descricao: "IPTU", responsavel: "Carolina Moreira", real: 59.18, vencimento: new Date(Date.UTC(2025, 11, 30, 12, 0, 0)), status: "Pago" },
+    { descricao: "Planejado Cozinha 11/23", responsavel: "Carolina Moreira", real: 317.00, vencimento: new Date(Date.UTC(2025, 11, 12, 12, 0, 0)), status: "Pago" },
+    { descricao: "Condomínio - Ap 303", responsavel: "Fábio Moreira", real: 349.47, vencimento: new Date(Date.UTC(2025, 11, 10, 12, 0, 0)), status: "Pago" },
+    { descricao: "Israel - Mesada", responsavel: "Carolina Moreira", real: 29.90, vencimento: new Date(Date.UTC(2025, 11, 10, 12, 0, 0)), status: "Pago" },
+    { descricao: "Investimento", responsavel: "Carolina Moreira", real: 500.00, vencimento: new Date(Date.UTC(2025, 11, 15, 12, 0, 0)), status: "Pendente" },
+    { descricao: "Condução - Israel", responsavel: "Carolina Moreira", real: 200.00, vencimento: new Date(Date.UTC(2025, 11, 3, 12, 0, 0)), status: "Pago" },
+    { descricao: "Seguro Cartão Cred.", responsavel: "Carolina Moreira", real: 45.77, vencimento: new Date(Date.UTC(2025, 11, 3, 12, 0, 0)), status: "Débito Aut." },
+    { descricao: "Seguro Samsung", responsavel: "Carolina Moreira", real: 43.77, vencimento: new Date(Date.UTC(2025, 11, 3, 12, 0, 0)), status: "Débito Aut." },
+    { descricao: "Internet Tracecomm", responsavel: "Carolina Moreira", real: 99.90, vencimento: new Date(Date.UTC(2025, 11, 22, 12, 0, 0)), status: "Pago" },
+    { descricao: "Itaú (23/48)", responsavel: "Carolina Moreira", real: 1439.69, vencimento: new Date(Date.UTC(2025, 11, 1, 12, 0, 0)), status: "Pago", totalParcelas: 48, parcelaAtual: 23 },
+    { descricao: "Cartão de crédito (Nu)", responsavel: "Carolina Moreira", real: 746.46, vencimento: new Date(Date.UTC(2025, 11, 2, 12, 0, 0)), status: "Pago" },
+    { descricao: "Cartão de Crédito (Itaú Carol)", responsavel: "Carolina Moreira", real: 1632.00, vencimento: new Date(Date.UTC(2025, 11, 15, 12, 0, 0)), status: "Pago" },
+    { descricao: "Conta de Gás - Ap 303", responsavel: "Fábio Moreira", real: 70.85, vencimento: new Date(Date.UTC(2025, 11, 5, 12, 0, 0)), status: "Pago" },
+    { descricao: "Cartão de Crédito (Itaú Black)", responsavel: "Carolina Moreira", real: 902.67, vencimento: new Date(Date.UTC(2025, 11, 15, 12, 0, 0)), status: "Pago" },
+    { descricao: "C&A Pay", responsavel: "Carolina Moreira", real: 100.00, vencimento: new Date(Date.UTC(2025, 11, 3, 12, 0, 0)), status: "Pago" },
+    { descricao: "IPTV", responsavel: "Fábio Moreira", real: 25.00, vencimento: new Date(Date.UTC(2025, 11, 5, 12, 0, 0)), status: "" },
+    { descricao: "Cartão Uniclass (Itaú Fábio)", responsavel: "Fábio Moreira", real: 666.71, vencimento: new Date(Date.UTC(2025, 11, 5, 12, 0, 0)), status: "Pago" },
+    { descricao: "Cartão de crédito (MP Fábio)", responsavel: "Fábio Moreira", real: 0.00, vencimento: new Date(Date.UTC(2025, 11, 5, 12, 0, 0)), status: "Pago" },
+    { descricao: "Casa & Video", responsavel: "Carolina Moreira", real: 91.10, vencimento: new Date(Date.UTC(2025, 11, 1, 12, 0, 0)), status: "Pago" },
+    { descricao: "Cartão de Click (Itaú Fábio)", responsavel: "Fábio Moreira", real: 0.00, vencimento: new Date(Date.UTC(2025, 11, 8, 12, 0, 0)), status: "Cancelado" },
+    { descricao: "Internet TIM", responsavel: "Fábio Moreira", real: 139.99, vencimento: new Date(Date.UTC(2025, 11, 7, 12, 0, 0)), status: "Pago" },
+    { descricao: "Planejado Cozinha 11/23", responsavel: "Fábio Moreira", real: 317.00, vencimento: new Date(Date.UTC(2025, 11, 12, 12, 0, 0)), status: "Pago" },
+    { descricao: "Samsung pra sempre 6/21", responsavel: "Fábio Moreira", real: 220.00, vencimento: new Date(Date.UTC(2025, 11, 15, 12, 0, 0)), status: "Pago", totalParcelas: 21, parcelaAtual: 6 },
+    { descricao: "Israel - Mesada", responsavel: "Fábio Moreira", real: 0.00, vencimento: new Date(Date.UTC(2025, 11, 10, 12, 0, 0)), status: "" },
+    { descricao: "Investimento", responsavel: "Fábio Moreira", real: 0.00, vencimento: new Date(Date.UTC(2025, 11, 15, 12, 0, 0)), status: "" },
+    { descricao: "Supermercado (1/2)", responsavel: "FAROL", real: 0.00, vencimento: new Date(Date.UTC(2025, 11, 2, 12, 0, 0)), status: "", totalParcelas: 2, parcelaAtual: 1 },
+    { descricao: "Supermercado (2/2)", responsavel: "FAROL", real: 0.00, vencimento: new Date(Date.UTC(2025, 11, 16, 12, 0, 0)), status: "", totalParcelas: 2, parcelaAtual: 2 },
   ];
 
   for (const exp of expenses) {

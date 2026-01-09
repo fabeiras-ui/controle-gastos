@@ -9,8 +9,9 @@ export async function getExpensesByMonth(month: number, year: number) {
   const userEmail = session?.user?.email || "admin@home.com"
 
   // Define o início e o fim do mês em UTC para evitar problemas de fuso horário
-  const startDate = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0))
-  const endDate = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999))
+  // Ajustado para ser mais abrangente e evitar problemas com fuso horário local
+  const startDate = new Date(year, month, 1, 0, 0, 0, 0)
+  const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999)
 
   try {
     const user = await prisma.user.findUnique({ where: { email: userEmail } })
@@ -526,8 +527,8 @@ export async function importPreviousMonthExpenses(targetMonth: number, targetYea
     const prevMonth = targetMonth === 0 ? 11 : targetMonth - 1
     const prevYear = targetMonth === 0 ? targetYear - 1 : targetYear
 
-    const startDate = new Date(Date.UTC(prevYear, prevMonth, 1, 0, 0, 0, 0))
-    const endDate = new Date(Date.UTC(prevYear, prevMonth + 1, 0, 23, 59, 59, 999))
+    const startDate = new Date(prevYear, prevMonth, 1, 0, 0, 0, 0)
+    const endDate = new Date(prevYear, prevMonth + 1, 0, 23, 59, 59, 999)
 
     const prevExpenses = await prisma.expense.findMany({
       where: {
@@ -652,15 +653,19 @@ export async function getChartData(filter: string, selectedYear: number, selecte
     const current = new Date(startDate)
     
     if (filter === "30days") {
-        // Para 30 dias, podemos mostrar por dia ou por semana. Mas o requisito fala em "meses que estão sendo exibidos".
-        // Vamos manter por dia se for 30 dias? Ou apenas os meses.
-        // Se for 30 dias e cruzar dois meses, mostramos os dois.
-        while (current <= endDate) {
-            const dayLabel = `${current.getDate()}/${current.getMonth() + 1}`
+        // Iniciar no primeiro dia do mês selecionado
+        const current = new Date(Date.UTC(selectedYear, selectedMonth, 1, 12, 0, 0, 0))
+        // Fim do mês selecionado
+        const monthEndDate = new Date(Date.UTC(selectedYear, selectedMonth + 1, 0, 12, 0, 0, 0))
+
+        while (current <= monthEndDate) {
+            const dayLabel = `${current.getUTCDate()}/${current.getUTCMonth() + 1}`
             const filteredExpenses = expenses
                 .filter(e => {
                     const d = new Date(e.vencimento)
-                    return d.getDate() === current.getDate() && d.getMonth() === current.getMonth() && d.getFullYear() === current.getFullYear()
+                    return d.getUTCDate() === current.getUTCDate() && 
+                           d.getUTCMonth() === current.getUTCMonth() && 
+                           d.getUTCFullYear() === current.getUTCFullYear()
                 })
             
             const realizado = filteredExpenses
@@ -671,7 +676,7 @@ export async function getChartData(filter: string, selectedYear: number, selecte
                 .reduce((acc, curr) => acc + curr.real, 0)
             
             chartData.push({ name: dayLabel, realizado, previsto })
-            current.setDate(current.getDate() + 1)
+            current.setUTCDate(current.getUTCDate() + 1)
         }
     } else {
         // Agrupar por mês
