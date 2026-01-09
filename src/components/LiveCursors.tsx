@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useMyPresence, useOthers } from "../../liveblocks.config";
 import { MousePointer2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -9,6 +9,17 @@ export function LiveCursors() {
   const [{ cursor }, updateMyPresence] = useMyPresence();
   const others = useOthers();
   const { data: session } = useSession();
+  const [ping, setPing] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    const handlePing = (e: any) => {
+      setPing({ x: e.detail.x, y: e.detail.y });
+      setTimeout(() => setPing(null), 2000); // Remove o ping após 2 segundos
+    };
+
+    window.addEventListener("cursor-ping", handlePing);
+    return () => window.removeEventListener("cursor-ping", handlePing);
+  }, []);
 
   useEffect(() => {
     const fetchUserData = () => {
@@ -62,6 +73,14 @@ export function LiveCursors() {
     <div
       className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-[9999]"
     >
+      {ping && (
+        <div
+          className="absolute top-0 left-0 w-20 h-20 -ml-10 -mt-10 rounded-full border-2 border-blue-500 animate-ping opacity-75"
+          style={{
+            transform: `translate(${ping.x}px, ${ping.y}px)`,
+          }}
+        />
+      )}
       {others.map(({ connectionId, presence }) => {
         if (!presence?.cursor) return null;
 
