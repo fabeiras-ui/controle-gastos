@@ -38,8 +38,8 @@ export function LiveCursors() {
     const moveMouse = (e: PointerEvent) => {
       updateMyPresence({
         cursor: {
-          x: Math.round(e.clientX),
-          y: Math.round(e.clientY),
+          x: Math.round(e.pageX),
+          y: Math.round(e.pageY),
         },
       });
     };
@@ -60,7 +60,7 @@ export function LiveCursors() {
 
   return (
     <div
-      className="fixed inset-0 z-50 pointer-events-none"
+      className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-[9999]"
     >
       {others.map(({ connectionId, presence }) => {
         if (!presence?.cursor) return null;

@@ -113,7 +113,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${sfPro.variable} antialiased`}>
+      <body className={`${sfPro.variable} antialiased relative`}>
         <Providers>
           <LiveblocksProvider>{children}</LiveblocksProvider>
         </Providers>

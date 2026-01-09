@@ -5,6 +5,7 @@ import { LiveblocksProvider as Provider } from "@liveblocks/react";
 import { RoomProvider } from "../../liveblocks.config";
 import { LiveCursors } from "@/components/LiveCursors";
 import { PresenceBar } from "@/components/PresenceBar";
+import { useSession } from "next-auth/react";
 
 const COLORS = [
   "#E57373", "#F06292", "#BA68C8", "#9575CD", "#7986CB", "#64B5F6", "#4FC3F7",
@@ -13,7 +14,12 @@ const COLORS = [
 ];
 
 export function LiveblocksProvider({ children }: { children: React.ReactNode }) {
+  const { status } = useSession();
   const color = React.useMemo(() => COLORS[Math.floor(Math.random() * COLORS.length)], []);
+
+  if (status !== "authenticated") {
+    return <>{children}</>;
+  }
 
   return (
     <Provider publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!}>

@@ -8,12 +8,8 @@ export default function LogoutPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const performLogout = async () => {
-      await signOut({ redirect: false })
-      router.push("/")
-    }
-    performLogout()
-  }, [router])
+    signOut({ callbackUrl: "/" })
+  }, [])
 
   return (
     <div className="flex min-h-screen items-center justify-center">
