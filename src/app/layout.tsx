@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "@/providers/SessionProvider";
 import { Toaster } from "sonner";
+import { LiveblocksProvider } from "@/providers/LiveblocksProvider";
 
 const sfPro = localFont({
   src: [
@@ -113,7 +114,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${sfPro.variable} antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        </Providers>
         <Toaster richColors position="top-right" />
       </body>
     </html>
