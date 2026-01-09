@@ -8,12 +8,16 @@ import {useState, useEffect, Suspense} from "react"
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
 import {useSearchParams, useRouter, usePathname} from "next/navigation"
 
-import {getExpensesByMonth, getDashboardData, getChartData} from "./actions"
+import {getExpensesByMonth, getDashboardData, getChartData, getStatusList, getCategories} from "./actions"
 import {CreateExpenseDialog} from "./create-expense-dialog"
 import {ImportExpensesButton} from "./import-expenses-button"
 import {AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend} from 'recharts'
 import {CategorySummary} from "./category-summary"
 import {Checkbox} from "@/components/ui/checkbox"
+import {Input} from "@/components/ui/input"
+import {MultiSelect} from "@/components/ui/multi-select"
+import {MonthYearCalendar} from "@/components/ui/month-year-calendar"
+import {Filter, Search} from "lucide-react"
 
 function DashboardContent() {
 	const router = useRouter()
@@ -33,7 +37,11 @@ function DashboardContent() {
 	const [showRealizado, setShowRealizado] = useState(true)
 	const [showPrevisto, setShowPrevisto] = useState(true)
 
-	const years = [2024, 2025, 2026]
+	const [searchTerm, setSearchTerm] = useState("")
+	const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
+	const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+	const [allStatuses, setAllStatuses] = useState<string[]>([])
+	const [allCategories, setAllCategories] = useState<{id: number, name: string}[]>([])
 
 	const months = [
 		"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -47,16 +55,12 @@ function DashboardContent() {
 		router.push(`${pathname}?${params.toString()}`, { scroll: false })
 	}
 
-	const handleMonthChange = (v: string | null) => {
-    if (!v) return
-		const m = parseInt(v)
+	const handleMonthChange = (m: number) => {
 		setActiveMonth(m)
 		updateQueryParams(m, selectedYear)
 	}
 
-	const handleYearChange = (v: string | null) => {
-    if (!v) return
-		const y = parseInt(v)
+	const handleYearChange = (y: number) => {
 		setSelectedYear(y)
 		updateQueryParams(activeMonth, y)
 	}
@@ -79,12 +83,23 @@ function DashboardContent() {
 		setCategoryRefreshKey(prev => prev + 1)
 		await Promise.all([
 			loadExpenses(),
-			loadChartData()
+			loadChartData(),
+			loadFilterOptions()
 		])
+	}
+
+	const loadFilterOptions = async () => {
+		const [statuses, cats] = await Promise.all([
+			getStatusList(),
+			getCategories()
+		])
+		setAllStatuses(statuses)
+		setAllCategories(cats)
 	}
 
 	useEffect(() => {
 		loadExpenses()
+		loadFilterOptions()
 	}, [activeMonth, selectedYear])
 
 	useEffect(() => {
@@ -105,6 +120,14 @@ function DashboardContent() {
 			if (m !== activeMonth) setActiveMonth(m)
 		}
 	}, [searchParams])
+
+	const filteredExpenses = expenses.filter(expense => {
+		const matchesSearch = expense.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+		const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(expense.status)
+		const categoryId = expense.type?.categoryRef?.id
+		const matchesCategory = selectedCategories.length === 0 || (categoryId && selectedCategories.includes(categoryId.toString()))
+		return matchesSearch && matchesStatus && matchesCategory
+	})
 
 	return (
 		<div className="p-8 space-y-8 min-h-screen">
@@ -350,48 +373,62 @@ function DashboardContent() {
 					{/* Expenses Filter and Table */}
 					<div className="space-y-4">
 						<div className="flex justify-between items-center gap-4 ">
-							<div className="flex items-center gap-4">
-								<h1 className="text-xl font-bold">Filtro</h1>
-								<Select value={selectedYear.toString()} onValueChange={handleYearChange}>
-									<SelectTrigger className="w-[120px] bg-white">
-										<SelectValue>{selectedYear.toString() || "Ano"}</SelectValue>
-									</SelectTrigger>
-									<SelectContent>
-										{years.map(year => (
-											<SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-								<Select value={activeMonth.toString()} onValueChange={handleMonthChange}>
-									<SelectTrigger className="w-[180px] bg-white">
-										<SelectValue>{months[activeMonth] || "Mês"}</SelectValue>
-									</SelectTrigger>
-									<SelectContent>
-										{months.map((month, index) => (
-											<SelectItem key={month} value={index.toString()}>{month}</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
+							<div className="flex items-center gap-4 flex-1">
+								<div className="relative w-full max-w-[300px]">
+									<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+									<Input
+										placeholder="Pesquisar..."
+										value={searchTerm}
+										onChange={(e) => setSearchTerm(e.target.value)}
+										className="pl-9 bg-white"
+									/>
+								</div>
 							</div>
-							<div className="flex items-center gap-3">
-								<Button
-									onClick={() => setIsDialogOpen(true)}
-									className="size-9">
-									<Plus className="h-4 w-4"/>
-								</Button>
-
-								<ImportExpensesButton
+							
+							<div className="flex items-center gap-2">
+								<MonthYearCalendar
 									month={activeMonth}
 									year={selectedYear}
-									onImportSuccess={refreshData}
+									onMonthChange={handleMonthChange}
+									onYearChange={handleYearChange}
+									isActive={activeMonth !== new Date().getMonth() || selectedYear !== new Date().getFullYear()}
 								/>
+
+								<MultiSelect
+									label="Status"
+									options={allStatuses.map(s => ({ label: s, value: s }))}
+									selected={selectedStatuses}
+									onChange={setSelectedStatuses}
+								/>
+
+								<MultiSelect
+									label="Categoria"
+									icon={Filter}
+									options={allCategories.map(c => ({ label: c.name, value: c.id.toString() }))}
+									selected={selectedCategories}
+									onChange={setSelectedCategories}
+								/>
+
+								<div className="flex items-center gap-2 ml-2">
+									<Button
+										onClick={() => setIsDialogOpen(true)}
+										className="size-9">
+										<Plus className="h-4 w-4"/>
+									</Button>
+
+									<ImportExpensesButton
+										month={activeMonth}
+										year={selectedYear}
+										onImportSuccess={refreshData}
+									/>
+								</div>
 							</div>
 						</div>
 
 						<ExpenseTable 
 							month={activeMonth} 
 							year={selectedYear} 
-							data={expenses} 
+							data={filteredExpenses} 
 							onUpdate={refreshData}
 						/>
 					</div>
