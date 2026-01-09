@@ -18,7 +18,6 @@ export async function getExpensesByMonth(month: number, year: number) {
 
     const expenses = await prisma.expense.findMany({
       where: {
-        userId: user.id,
         vencimento: {
           gte: startDate,
           lte: endDate,
@@ -457,14 +456,12 @@ export async function getDashboardData(month: number, year: number) {
     const [currentExpenses, prevExpenses] = await Promise.all([
       prisma.expense.aggregate({
         where: { 
-          userId: user.id,
           vencimento: { gte: startDate, lte: endDate } 
         },
         _sum: { real: true }
       }),
       prisma.expense.aggregate({
         where: { 
-          userId: user.id,
           vencimento: { gte: prevStartDate, lte: prevEndDate } 
         },
         _sum: { real: true }
@@ -510,7 +507,6 @@ export async function importPreviousMonthExpenses(targetMonth: number, targetYea
 
     const prevExpenses = await prisma.expense.findMany({
       where: {
-        userId: user.id,
         vencimento: {
           gte: startDate,
           lte: endDate,
@@ -612,7 +608,6 @@ export async function getChartData(filter: string, selectedYear: number, selecte
 
     const expenses = await prisma.expense.findMany({
       where: {
-        userId: user.id,
         vencimento: {
           gte: startDate,
           lte: endDate
