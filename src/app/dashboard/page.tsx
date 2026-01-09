@@ -11,8 +11,9 @@ import {useSearchParams, useRouter, usePathname} from "next/navigation"
 import {getExpensesByMonth, getDashboardData, getChartData} from "./actions"
 import {CreateExpenseDialog} from "./create-expense-dialog"
 import {ImportExpensesButton} from "./import-expenses-button"
-import {AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer} from 'recharts'
+import {AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend} from 'recharts'
 import {CategorySummary} from "./category-summary"
+import {Checkbox} from "@/components/ui/checkbox"
 
 function DashboardContent() {
 	const router = useRouter()
@@ -26,9 +27,11 @@ function DashboardContent() {
 	const [activeMonth, setActiveMonth] = useState(initialMonth)
 	const [isDialogOpen, setIsDialogOpen] = useState(false)
 	const [expenses, setExpenses] = useState<any[]>([])
-	const [dashboardData, setDashboardData] = useState({totalGastos: 0, percentageChange: 0, diffValue: 0, isHigher: false})
+	const [dashboardData, setDashboardData] = useState({totalGastos: 0, totalPrevisto: 0, percentageChange: 0, diffValue: 0, isHigher: false})
 	const [chartFilter, setChartFilter] = useState("30days")
-	const [chartData, setChartData] = useState<{ name: string, total: number }[]>([])
+	const [chartData, setChartData] = useState<{ name: string, realizado: number, previsto: number }[]>([])
+	const [showRealizado, setShowRealizado] = useState(true)
+	const [showPrevisto, setShowPrevisto] = useState(true)
 
 	const years = [2024, 2025, 2026]
 
@@ -126,7 +129,15 @@ function DashboardContent() {
 										currency: 'BRL'
 									}).format(dashboardData.totalGastos)}
 								</div>
-								<p className="text-xs text-zinc-400 mt-4">Total de gastos no mês selecionado</p>
+								<p className="text-xs text-zinc-400 mt-1">
+									Previsto: {new Intl.NumberFormat('pt-BR', {
+										style: 'currency',
+										currency: 'BRL'
+									}).format(dashboardData.totalPrevisto)}
+								</p>
+								<p className="text-xs text-zinc-500 mt-4">
+									Soma de todas as despesas pagas no mês.
+								</p>
 							</CardContent>
 						</Card>
 
@@ -200,7 +211,7 @@ function DashboardContent() {
 									</p>
 								</div>
 								<div className="flex gap-2">
- 								<Button
+									<Button
 										variant={chartFilter === "1year" ? "outline" : "ghost"}
 										size="sm"
 										onClick={() => setChartFilter("1year")}
@@ -227,13 +238,7 @@ function DashboardContent() {
 						<CardContent>
 							<div className="h-[300px] w-full">
 								<ResponsiveContainer width="100%" height="100%">
-									<AreaChart data={chartData} margin={{top: 10, right: 30, left: 0, bottom: 0}}>
-										<defs>
-											<linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="100%">
-												<stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
-												<stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
-											</linearGradient>
-										</defs>
+									<LineChart data={chartData} margin={{top: 10, right: 30, left: 0, bottom: 0}}>
 										<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)"/>
 										<XAxis
 											dataKey="name"
@@ -253,22 +258,67 @@ function DashboardContent() {
 												border: '1px solid var(--border)',
 												boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
 											}}
-           formatter={(value: any) => [new Intl.NumberFormat('pt-BR', {
-                                                                          style: 'currency',
-                                                                          currency: 'BRL'
-                                                                        }).format(Number(value) || 0), 'Total']}
+											formatter={(value: any, name: string) => [
+												new Intl.NumberFormat('pt-BR', {
+													style: 'currency',
+													currency: 'BRL'
+												}).format(Number(value) || 0),
+												name === 'realizado' ? 'Pago' : 'Previsto'
+											]}
 										/>
-										<Area
-											type="monotone"
-											dataKey="total"
-											stroke="var(--primary)"
-											strokeWidth={2}
-											fillOpacity={1}
-											fill="url(#colorTotal)"
-											isAnimationActive={false}
-										/>
-									</AreaChart>
+										{showRealizado && (
+											<Line
+												type="monotone"
+												dataKey="realizado"
+												name="Realizado"
+												stroke="#3b82f6"
+												strokeWidth={2}
+												dot={false}
+												isAnimationActive={false}
+											/>
+										)}
+										{showPrevisto && (
+											<Line
+												type="monotone"
+												dataKey="previsto"
+												name="Previsto"
+												stroke="#94a3b8"
+												strokeWidth={2}
+												strokeDasharray="5 5"
+												dot={false}
+												isAnimationActive={false}
+											/>
+										)}
+									</LineChart>
 								</ResponsiveContainer>
+							</div>
+							<div className="flex items-center justify-center gap-6 mt-6 pt-4">
+								<div className="flex items-center gap-2">
+									<Checkbox
+										id="realizado"
+										checked={showRealizado}
+										onCheckedChange={(checked) => setShowRealizado(!!checked)}
+									/>
+									<label
+										htmlFor="realizado"
+										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+									>
+										Realizado
+									</label>
+								</div>
+								<div className="flex items-center gap-2">
+									<Checkbox
+										id="previsto"
+										checked={showPrevisto}
+										onCheckedChange={(checked) => setShowPrevisto(!!checked)}
+									/>
+									<label
+										htmlFor="previsto"
+										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+									>
+										Previsto
+									</label>
+								</div>
 							</div>
 						</CardContent>
 					</Card>

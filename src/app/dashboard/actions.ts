@@ -467,16 +467,24 @@ export async function getDashboardData(month: number, year: number) {
     const prevStartDate = new Date(Date.UTC(prevYear, prevMonth, 1, 0, 0, 0, 0))
     const prevEndDate = new Date(Date.UTC(prevYear, prevMonth + 1, 0, 23, 59, 59, 999))
 
-    const [currentExpenses, prevExpenses] = await Promise.all([
+    const [currentExpenses, prevExpenses, currentTotalPrevisto] = await Promise.all([
       prisma.expense.aggregate({
         where: { 
-          vencimento: { gte: startDate, lte: endDate } 
+          vencimento: { gte: startDate, lte: endDate },
+          status: "Pago"
         },
         _sum: { real: true }
       }),
       prisma.expense.aggregate({
         where: { 
-          vencimento: { gte: prevStartDate, lte: prevEndDate } 
+          vencimento: { gte: prevStartDate, lte: prevEndDate },
+          status: "Pago"
+        },
+        _sum: { real: true }
+      }),
+      prisma.expense.aggregate({
+        where: { 
+          vencimento: { gte: startDate, lte: endDate }
         },
         _sum: { real: true }
       })
@@ -484,6 +492,7 @@ export async function getDashboardData(month: number, year: number) {
 
     const totalCurrent = currentExpenses._sum.real || 0
     const totalPrev = prevExpenses._sum.real || 0
+    const totalPrevisto = currentTotalPrevisto._sum.real || 0
     
     let percentageChange = 0
     if (totalPrev > 0) {
@@ -494,13 +503,14 @@ export async function getDashboardData(month: number, year: number) {
 
     return {
       totalGastos: totalCurrent,
+      totalPrevisto,
       percentageChange,
       diffValue: totalCurrent - totalPrev,
       isHigher: totalCurrent > totalPrev
     }
   } catch (error) {
     console.error("Erro ao buscar dados do dashboard:", error)
-    return { totalGastos: 0, percentageChange: 0, diffValue: 0, isHigher: false }
+    return { totalGastos: 0, totalPrevisto: 0, percentageChange: 0, diffValue: 0, isHigher: false }
   }
 }
 
@@ -629,7 +639,8 @@ export async function getChartData(filter: string, selectedYear: number, selecte
       },
       select: {
         real: true,
-        vencimento: true
+        vencimento: true,
+        status: true
       },
       orderBy: {
         vencimento: 'asc'
@@ -637,7 +648,7 @@ export async function getChartData(filter: string, selectedYear: number, selecte
     })
 
     // Gerar lista de todos os meses/períodos no intervalo para garantir que o gráfico não fique vazio
-    const chartData: { name: string, total: number }[] = []
+    const chartData: { name: string, realizado: number, previsto: number }[] = []
     const current = new Date(startDate)
     
     if (filter === "30days") {
@@ -646,28 +657,40 @@ export async function getChartData(filter: string, selectedYear: number, selecte
         // Se for 30 dias e cruzar dois meses, mostramos os dois.
         while (current <= endDate) {
             const dayLabel = `${current.getDate()}/${current.getMonth() + 1}`
-            const total = expenses
+            const filteredExpenses = expenses
                 .filter(e => {
                     const d = new Date(e.vencimento)
                     return d.getDate() === current.getDate() && d.getMonth() === current.getMonth() && d.getFullYear() === current.getFullYear()
                 })
+            
+            const realizado = filteredExpenses
+                .filter(e => e.status === "Pago")
                 .reduce((acc, curr) => acc + curr.real, 0)
             
-            chartData.push({ name: dayLabel, total })
+            const previsto = filteredExpenses
+                .reduce((acc, curr) => acc + curr.real, 0)
+            
+            chartData.push({ name: dayLabel, realizado, previsto })
             current.setDate(current.getDate() + 1)
         }
     } else {
         // Agrupar por mês
         while (current <= endDate) {
             const monthLabel = current.toLocaleString('pt-BR', { month: 'short' })
-            const total = expenses
+            const filteredExpenses = expenses
                 .filter(e => {
                     const d = new Date(e.vencimento)
                     return d.getMonth() === current.getMonth() && d.getFullYear() === current.getFullYear()
                 })
+            
+            const realizado = filteredExpenses
+                .filter(e => e.status === "Pago")
                 .reduce((acc, curr) => acc + curr.real, 0)
             
-            chartData.push({ name: monthLabel, total })
+            const previsto = filteredExpenses
+                .reduce((acc, curr) => acc + curr.real, 0)
+            
+            chartData.push({ name: monthLabel, realizado, previsto })
             current.setMonth(current.getMonth() + 1)
         }
     }

@@ -12,6 +12,7 @@ export async function getCategorySpending(month: number, year: number) {
           gte: startDate,
           lte: endDate,
         },
+        status: "Pago",
       },
       include: {
         type: {
