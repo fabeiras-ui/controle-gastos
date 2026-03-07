@@ -10,6 +10,7 @@ type Presence = {
   name: string;
   color: string;
   avatar?: string | null;
+  message?: string;
 };
 
 type Storage = {
@@ -21,7 +22,10 @@ type UserMeta = {
 };
 
 type RoomEvent = {
-  // Define the structure of your room events here
+  type: "REACTION";
+  emoji: string;
+  x: number;
+  y: number;
 };
 
 export const {
@@ -29,4 +33,6 @@ export const {
   useMyPresence,
   useOthers,
   useSelf,
+  useBroadcastEvent,
+  useEventListener,
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);

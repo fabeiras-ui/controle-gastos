@@ -1,16 +1,89 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useMyPresence, useOthers } from "../../liveblocks.config";
+import React, { useEffect, useState, useCallback } from "react";
+import { useMyPresence, useOthers, useBroadcastEvent, useEventListener } from "../../liveblocks.config";
 import { MousePointer2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+type Reaction = {
+  value: string;
+  timestamp: number;
+  point: { x: number; y: number };
+  dx: number;
+  dy: number;
+};
+
 export function LiveCursors() {
-  const [{ cursor }, updateMyPresence] = useMyPresence();
+  const [{ cursor, message }, updateMyPresence] = useMyPresence();
   const others = useOthers();
+  const broadcast = useBroadcastEvent();
   const { data: session } = useSession();
   const [ping, setPing] = useState<{ x: number; y: number } | null>(null);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [isChatActive, setIsChatActive] = useState(false);
+
+  // Remove reações após 4 segundos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setReactions((reactions) =>
+        reactions.filter((r) => r.timestamp > Date.now() - 4000)
+      );
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEventListener(({ event }) => {
+    if (event.type === "REACTION") {
+      // Cria várias partículas para a explosão
+      const newReactions = Array.from({ length: 8 }).map(() => ({
+        value: event.emoji,
+        timestamp: Date.now() + Math.random() * 100,
+        point: { x: event.x, y: event.y },
+        dx: (Math.random() - 0.5) * 100,
+        dy: (Math.random() - 0.5) * 100,
+      }));
+      setReactions((reactions) => [...reactions, ...newReactions]);
+    }
+  });
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "/") {
+        if (!isChatActive) {
+          e.preventDefault();
+          setIsChatActive(true);
+        }
+      } else if (e.key === "Escape") {
+        updateMyPresence({ message: "" });
+        setIsChatActive(false);
+      } else if (e.key === "e" || e.key === "E") {
+        if (!isChatActive && cursor) {
+          broadcast({
+            type: "REACTION",
+            emoji: "👋",
+            x: cursor.x,
+            y: cursor.y,
+          });
+          // Também adiciona localmente para feedback instantâneo
+          const newReactions = Array.from({ length: 8 }).map(() => ({
+            value: "👋",
+            timestamp: Date.now() + Math.random() * 100,
+            point: { x: cursor.x, y: cursor.y },
+            dx: (Math.random() - 0.5) * 100,
+            dy: (Math.random() - 0.5) * 100,
+          }));
+          setReactions((reactions) => [...reactions, ...newReactions]);
+        }
+      }
+    },
+    [broadcast, cursor, isChatActive, updateMyPresence]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   useEffect(() => {
     const handlePing = (e: any) => {
@@ -80,6 +153,52 @@ export function LiveCursors() {
     <div
       className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-[9999]"
     >
+      {reactions.map((reaction) => (
+        <div
+          key={reaction.timestamp.toString() + Math.random()}
+          className="absolute pointer-events-none select-none emoji-explosion"
+          style={{
+            transform: `translate(${reaction.point.x}px, ${reaction.point.y}px)`,
+            "--tw-translate-x": `${reaction.dx}px`,
+            "--tw-translate-y": `${reaction.dy}px`,
+          } as any}
+        >
+          <div className="text-2xl">{reaction.value}</div>
+        </div>
+      ))}
+
+      {cursor && isChatActive && (
+        <div
+          className="absolute top-0 left-0 z-50"
+          style={{
+            transform: `translate(${cursor.x}px, ${cursor.y}px)`,
+          }}
+        >
+          <div 
+            className="ml-5 mt-2 px-3 py-2 bg-blue-500 text-white text-sm rounded-xl rounded-tl-none shadow-lg pointer-events-auto"
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            {isChatActive && (
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] opacity-70 uppercase font-bold">Chat</span>
+                <input
+                  autoFocus
+                  className="bg-transparent border-none outline-none text-white placeholder:text-blue-200 w-[200px]"
+                  placeholder="Escreva algo..."
+                  onChange={(e) => updateMyPresence({ message: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      setIsChatActive(false);
+                    }
+                  }}
+                  value={message || ""}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {ping && (
         <div
           className="absolute top-0 left-0 w-20 h-20 -ml-10 -mt-10 rounded-full border-2 border-blue-500 animate-ping opacity-75"
@@ -118,6 +237,13 @@ export function LiveCursors() {
               </Avatar>
               {presence.name || "Convidado"}
             </div>
+            {presence.message && (
+              <div 
+                className="ml-3 mt-1 px-3 py-1.5 bg-white text-black text-xs rounded-xl rounded-tl-none shadow-md border border-slate-100 max-w-[200px] break-words"
+              >
+                {presence.message}
+              </div>
+            )}
           </div>
         );
       })}
