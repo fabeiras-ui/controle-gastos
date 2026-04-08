@@ -1,0 +1,1 @@
+- [Stack do Projeto](project-stack.md) - Stack e estrutura do projeto Vault (controle de gastos)
