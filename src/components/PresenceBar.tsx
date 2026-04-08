@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useOthers } from "../../liveblocks.config";
+import { useOthers, RoomProvider } from "../../liveblocks.config";
 import {
   Avatar,
   AvatarFallback,
@@ -10,6 +10,14 @@ import {
 } from "@/components/ui/avatar";
 
 export function PresenceBar() {
+  return (
+    <RoomProvider id="vault-family-room" initialPresence={{ cursor: null, name: "Usuário", color: "#3b82f6" }}>
+      <PresenceBarContent />
+    </RoomProvider>
+  );
+}
+
+function PresenceBarContent() {
   const others = useOthers();
   const authenticatedOthers = others;
 

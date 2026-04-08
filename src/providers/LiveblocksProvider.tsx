@@ -36,14 +36,22 @@ export function LiveblocksProvider({ children }: { children: React.ReactNode }) 
 
   const publicApiKey = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY;
 
+  // Se não houver chave pública, não renderizamos o Provider para evitar erros
+  // Mas sempre renderizamos children para não quebrar a árvore React
   if (!publicApiKey) {
     return <>{children}</>;
+  }
+
+  // O RoomProvider deve ser renderizado APENAS se estivermos autenticados
+  // para evitar erros de contexto quando o usuário ainda está na tela de login
+  if (status !== "authenticated") {
+    return <Provider publicApiKey={publicApiKey}>{children}</Provider>;
   }
 
   return (
     <Provider publicApiKey={publicApiKey}>
       <RoomProvider id="vault-family-room" initialPresence={initialPresence}>
-        {status === "authenticated" && <LiveCursors />}
+        <LiveCursors />
         {children}
       </RoomProvider>
     </Provider>
