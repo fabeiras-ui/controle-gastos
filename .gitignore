@@ -46,3 +46,13 @@ next-env.d.ts
 /prisma/migrations
 *.db
 *.db-journal
+/.idea/.gitignore
+/.idea/AICommit.xml
+/.idea/compiler.xml
+/.idea/controle-gastos.iml
+/.idea/dataSources.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/ShadcnHelperSettings.xml
+/.idea/vcs.xml
