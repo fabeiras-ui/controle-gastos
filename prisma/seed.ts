@@ -23,7 +23,7 @@ async function main() {
 
   // Status
   const statusNames = ["Pago", "Pendente", "Débito Aut.", "Cancelado"];
-  const createdStatuses: Record<string, any> = {};
+  const createdStatuses: Record<string, unknown> = {};
   for (const name of statusNames) {
     createdStatuses[name] = await prisma.status.upsert({
       where: { name },
@@ -48,7 +48,7 @@ async function main() {
     { name: "Outros / Variáveis", icon: "TrendingUp", color: "#71717a" }, // Zinc 500
   ];
 
-  const createdCategories: Record<string, any> = {};
+  const createdCategories: Record<string, unknown> = {};
   for (const cat of categoriesData) {
     createdCategories[cat.name] = await prisma.category.upsert({
       where: { name: cat.name },
@@ -88,7 +88,7 @@ async function main() {
     { name: "Supermercado (2/2)", category: "Alimentação" },
   ];
 
-  const createdTypes: Record<string, any> = {};
+  const createdTypes: Record<string, unknown> = {};
   for (const item of expenseTypeData) {
     const category = createdCategories[item.category];
     createdTypes[item.name] = await prisma.expenseType.upsert({
@@ -147,8 +147,8 @@ async function main() {
         userId: admin.id,
         typeId: type?.id,
         statusId: status?.id,
-        totalParcelas: (exp as any).totalParcelas || 1,
-        parcelaAtual: (exp as any).parcelaAtual || 1,
+        totalParcelas: (exp as { totalParcelas?: number }).totalParcelas || 1,
+        parcelaAtual: (exp as { parcelaAtual?: number }).parcelaAtual || 1,
       },
     });
   }
