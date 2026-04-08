@@ -1,0 +1,9 @@
+{
+  "profile": "openai",
+  "env": {
+    "OPENAI_BASE_URL": "https://openrouter.ai/api/v1",
+    "OPENAI_MODEL": "arcee-ai/trinity-large-preview:free",
+    "OPENAI_API_KEY": "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"
+  },
+  "createdAt": "2026-04-08T10:44:28.586Z"
+}

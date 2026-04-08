@@ -27,7 +27,7 @@ async function main() {
   for (const name of statusNames) {
     createdStatuses[name] = await prisma.status.upsert({
       where: { name },
-      update: {},
+      update: {},Pode
       create: { name },
     });
   }
