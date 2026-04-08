@@ -34,8 +34,14 @@ export function LiveblocksProvider({ children }: { children: React.ReactNode }) 
     isAuthenticated: status === "authenticated"
   }), [session, status, color]);
 
+  const publicApiKey = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY;
+
+  if (!publicApiKey) {
+    return <>{children}</>;
+  }
+
   return (
-    <Provider publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!}>
+    <Provider publicApiKey={publicApiKey}>
       <RoomProvider id="vault-family-room" initialPresence={initialPresence}>
         {status === "authenticated" && <LiveCursors />}
         {children}
