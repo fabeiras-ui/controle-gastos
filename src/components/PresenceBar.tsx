@@ -17,7 +17,7 @@ export function PresenceBar() {
     return null;
   }
 
-  const handleAvatarClick = (e: React.MouseEvent, presence: any) => {
+  const handleAvatarClick = (e: React.MouseEvent, presence: { cursor?: { x: number; y: number } | null }) => {
     e.preventDefault();
     e.stopPropagation();
     if (presence?.cursor) {
@@ -46,7 +46,7 @@ export function PresenceBar() {
             onClick={(e) => handleAvatarClick(e, presence)}
           >
             {presence?.avatar && (
-              <AvatarImage src={presence.avatar} alt={presence.name} />
+              <AvatarImage src={presence.avatar} alt={presence.name || undefined} />
             )}
             <AvatarFallback
               className="text-white text-[10px] font-medium"

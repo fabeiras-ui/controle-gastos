@@ -23,7 +23,7 @@ async function main() {
 
   // Status
   const statusNames = ["Pago", "Pendente", "Débito Aut.", "Cancelado"];
-  const createdStatuses: Record<string, unknown> = {};
+  const createdStatuses: Record<string, any> = {};
   for (const name of statusNames) {
     createdStatuses[name] = await prisma.status.upsert({
       where: { name },
@@ -48,7 +48,7 @@ async function main() {
     { name: "Outros / Variáveis", icon: "TrendingUp", color: "#71717a" }, // Zinc 500
   ];
 
-  const createdCategories: Record<string, unknown> = {};
+  const createdCategories: Record<string, any> = {};
   for (const cat of categoriesData) {
     createdCategories[cat.name] = await prisma.category.upsert({
       where: { name: cat.name },
@@ -88,7 +88,7 @@ async function main() {
     { name: "Supermercado (2/2)", category: "Alimentação" },
   ];
 
-  const createdTypes: Record<string, unknown> = {};
+  const createdTypes: Record<string, any> = {};
   for (const item of expenseTypeData) {
     const category = createdCategories[item.category];
     createdTypes[item.name] = await prisma.expenseType.upsert({

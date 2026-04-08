@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { getUsers, getStatusList, getCategories } from "./actions"
+import type { AppUser, Category } from "@/types"
 import * as LucideIcons from "lucide-react"
 import { HelpCircle } from "lucide-react"
 
@@ -49,9 +50,9 @@ export function ExpenseForm({
   onCancel,
   submitLabel,
 }: ExpenseFormProps) {
-  const [users, setUsers] = useState<{ id: number; nickname: string }[]>([])
+  const [users, setUsers] = useState<AppUser[]>([])
   const [statuses, setStatuses] = useState<string[]>([])
-  const [categories, setCategories] = useState<{ id: number; name: string; icon?: string | null }[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
 
   const [formData, setFormData] = useState<ExpenseFormData>(
     initialData || {
@@ -74,9 +75,9 @@ export function ExpenseForm({
         getStatusList(),
         getCategories(),
       ])
-      setUsers(userData)
+      setUsers(userData as AppUser[])
       setStatuses(statusData)
-      setCategories(categoryData as any)
+      setCategories(categoryData as Category[])
 
       if (!initialData) {
         if (userData.length > 0) {

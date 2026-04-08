@@ -19,16 +19,27 @@ interface CategorySummaryProps {
 	year: number
 }
 
+interface CategorySpending {
+	name: string
+	value: number
+	color: string
+	icon: string
+	percentage: number
+}
+
 export function CategorySummary({month, year}: CategorySummaryProps) {
-	const [data, setData] = useState<any[]>([])
+	const [data, setData] = useState<CategorySpending[]>([])
 
 	useEffect(() => {
+		let cancelled = false
 		async function loadData() {
 			const spending = await getCategorySpending(month, year)
-			setData(spending)
+			if (cancelled) return
+			setData(spending as CategorySpending[])
 		}
 
 		loadData()
+		return () => { cancelled = true }
 	}, [month, year])
 
 	const chartConfig = useMemo(() => {

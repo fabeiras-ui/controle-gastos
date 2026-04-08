@@ -8,8 +8,9 @@ import {useState, useEffect, Suspense} from "react"
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
 import {useSearchParams, useRouter, usePathname} from "next/navigation"
 
-import {getExpensesByMonth, getDashboardData, getChartData, getStatusList, getCategories} from "./actions"
-import {CreateExpenseDialog} from "./create-expense-dialog"
+import { getExpensesByMonth, getDashboardData, getChartData, getStatusList, getCategories } from "./actions"
+import type { Expense, Category } from "@/types"
+import { CreateExpenseDialog } from "./create-expense-dialog"
 import {ImportExpensesButton} from "./import-expenses-button"
 import {AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend} from 'recharts'
 import {CategorySummary} from "./category-summary"
@@ -31,7 +32,7 @@ function DashboardContent() {
 	const [selectedYear, setSelectedYear] = useState(initialYear)
 	const [activeMonth, setActiveMonth] = useState(initialMonth)
 	const [isDialogOpen, setIsDialogOpen] = useState(false)
-	const [expenses, setExpenses] = useState<any[]>([])
+	const [expenses, setExpenses] = useState<Expense[]>([])
 	const [dashboardData, setDashboardData] = useState({totalGastos: 0, totalPrevisto: 0, percentageChange: 0, diffValue: 0, isHigher: false})
 	const [chartFilter, setChartFilter] = useState("30days")
 	const [chartData, setChartData] = useState<{ name: string, realizado: number, previsto: number }[]>([])
@@ -41,8 +42,8 @@ function DashboardContent() {
 	const [searchTerm, setSearchTerm] = useState("")
 	const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
 	const [selectedCategories, setSelectedCategories] = useState<string[]>([])
- const [allStatuses, setAllStatuses] = useState<string[]>([]) // nomes apenas para filtros
-	const [allCategories, setAllCategories] = useState<{id: number, name: string}[]>([])
+	const [allStatuses, setAllStatuses] = useState<string[]>([]) // nomes apenas para filtros
+	const [allCategories, setAllCategories] = useState<Category[]>([])
 
 	const months = [
 		"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -99,26 +100,45 @@ function DashboardContent() {
 	}
 
 	useEffect(() => {
-		loadExpenses()
-		loadFilterOptions()
+		let cancelled = false
+		const load = async () => {
+			const [data, dashData, statuses, cats] = await Promise.all([
+				getExpensesByMonth(activeMonth, selectedYear),
+				getDashboardData(activeMonth, selectedYear),
+				getStatusList(),
+				getCategories()
+			])
+			if (cancelled) return
+			setExpenses(data as Expense[])
+			setDashboardData(dashData)
+			setAllStatuses((statuses as { name: string }[]).map(s => s.name))
+			setAllCategories(cats as Category[])
+		}
+		load()
+		return () => { cancelled = true }
 	}, [activeMonth, selectedYear])
 
 	useEffect(() => {
-		loadChartData()
+		let cancelled = false
+		getChartData(chartFilter, selectedYear, activeMonth).then(data => {
+			if (cancelled) return
+			setChartData(data)
+		})
+		return () => { cancelled = true }
 	}, [chartFilter, selectedYear, activeMonth])
 
 	// Sincronizar estado local se a URL mudar (ex: navegação voltar/avançar)
 	useEffect(() => {
 		const yearParam = searchParams.get("year")
 		const monthParam = searchParams.get("month")
-		
+
 		if (yearParam) {
 			const y = parseInt(yearParam)
-			if (y !== selectedYear) setSelectedYear(y)
+			setSelectedYear(prev => prev !== y ? y : prev)
 		}
 		if (monthParam) {
 			const m = parseInt(monthParam)
-			if (m !== activeMonth) setActiveMonth(m)
+			setActiveMonth(prev => prev !== m ? m : prev)
 		}
 	}, [searchParams])
 
@@ -309,7 +329,7 @@ function DashboardContent() {
 												border: '1px solid var(--border)',
 												boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
 											}}
-											formatter={(value: any, name: string) => [
+											formatter={(value: number | string, name: string) => [
 												new Intl.NumberFormat('pt-BR', {
 													style: 'currency',
 													currency: 'BRL'
@@ -412,7 +432,7 @@ function DashboardContent() {
 									options={allCategories.map(c => ({ 
 										label: c.name, 
 										value: c.id.toString(),
-										icon: (c as any).icon 
+										icon: c.icon || undefined
 									}))}
 									selected={selectedCategories}
 									onChange={setSelectedCategories}

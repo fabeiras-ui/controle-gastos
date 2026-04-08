@@ -13,9 +13,9 @@ type Presence = {
   message?: string;
 };
 
-type Storage = object;
+type Storage = Record<string, any>;
 
-type UserMeta = object;
+type UserMeta = Record<string, any>;
 
 type RoomEvent = {
   type: "REACTION";

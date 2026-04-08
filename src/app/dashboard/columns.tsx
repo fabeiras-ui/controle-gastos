@@ -65,7 +65,7 @@ export type Expense = {
 const IconRenderer = ({iconName}: { iconName?: string | null }) => {
 	if (!iconName) return <HelpCircle className="h-4 w-4 text-muted-foreground"/>
 
-	const Icon = (LucideIcons as Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>>)[iconName]
+	const Icon = (LucideIcons as any)[iconName]
 	if (!Icon) return <HelpCircle className="h-4 w-4 text-muted-foreground"/>
 
 	return <Icon className="h-4 w-4"/>

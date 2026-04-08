@@ -95,7 +95,13 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Este e-mail já está em uso por outro usuário" }, { status: 400 })
     }
 
-    const data: any = {
+    const data: {
+      nickname: string
+      name?: string | null
+      email: string
+      image?: string | null
+      password?: string
+    } = {
       nickname,
       name,
       email,
