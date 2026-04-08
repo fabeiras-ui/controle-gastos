@@ -34,9 +34,9 @@ model Expense {
   updatedAt     DateTime     @updatedAt
   parcelaAtual  Int?         @default(1)
   totalParcelas Int?         @default(1)
-  user          User         @relation(fields: [userId], references: [id])
-  type          ExpenseType? @relation(fields: [typeId], references: [id])
   statusRef     Status?      @relation(fields: [statusId], references: [id])
+  type          ExpenseType? @relation(fields: [typeId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
 }
 
 model ExpenseType {
