@@ -48,6 +48,8 @@ export function ExpenseTable({
 
   const expenses = data || internalExpenses
   const loading = !data && internalExpenses.length === 0
+  
+  const isEmpty = !loading && expenses.length === 0 && !data
 
   useEffect(() => {
     async function loadInitialData() {
@@ -64,7 +66,16 @@ export function ExpenseTable({
   }, [])
 
   if (loading) {
-    return <div className="p-4 text-center">Carregando despesas...</div>
+    return <div className="p-4 text-center text-muted-foreground animate-pulse">Carregando despesas...</div>
+  }
+
+  if (isEmpty) {
+    return (
+      <div className="p-12 text-center border rounded-lg bg-muted/20">
+        <p className="text-muted-foreground">Nenhuma despesa encontrada para este mês.</p>
+        <p className="text-sm text-muted-foreground mt-2">Clique em "Nova Despesa" para começar!</p>
+      </div>
+    )
   }
 
   const columns = getColumns(statusList, categories, handleUpdate, month, year, users)

@@ -47,17 +47,26 @@ export const authOptions: AuthOptions = {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
         if (!user.email) return false
-        const existingUser = await prisma.user.findUnique({
-          where: { email: user.email }
-        })
-
-        if (!existingUser) {
-          await prisma.user.create({
-            data: {
-              email: user.email,
-              nickname: user.name || user.email.split('@')[0],
-            }
+        
+        try {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email }
           })
+
+          if (!existingUser) {
+            await prisma.user.create({
+              data: {
+                email: user.email,
+                nickname: user.name || user.email.split('@')[0],
+              }
+            })
+            console.log("Novo usuário Google criado:", user.email)
+          }
+        } catch (error) {
+          console.error("Erro no callback de signIn (Google):", error)
+          // Em produção, se o erro for de banco, talvez queiramos permitir o login
+          // e deixar o requireUser lidar com a criação sob demanda para não travar o usuário
+          return true 
         }
       }
       return true
@@ -81,5 +90,5 @@ export const authOptions: AuthOptions = {
       return session
     }
   },
-  secret: process.env.NEXTAUTH_SECRET || "p3rqS8-8K9L2m4B9xR3vT6yU9zW2a5b8-RENEWED-SESSIONS-CLEARED",
+  secret: process.env.NEXTAUTH_SECRET,
 }

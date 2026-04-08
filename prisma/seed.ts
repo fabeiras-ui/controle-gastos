@@ -6,20 +6,50 @@ const prisma = new PrismaClient();
 
 async function main() {
   const adminPassword = await bcrypt.hash("@dm1nTI127@!", 10);
+  const userPassword = await bcrypt.hash("user123", 10);
 
   const admin = await prisma.user.upsert({
     where: { email: "admin@home.com" },
     update: {
       password: adminPassword,
+      role: "ADMIN",
     },
     create: {
       nickname: "Admin",
       email: "admin@home.com",
       password: adminPassword,
+      role: "ADMIN",
     },
   });
 
-  console.log("Usuário admin criado: admin@home.com / @dm1nTI127@!");
+  const fabio = await prisma.user.upsert({
+    where: { email: "fabeiras@outlook.com" },
+    update: {
+      password: adminPassword,
+    },
+    create: {
+      nickname: "Fábio Moreira",
+      email: "fabeiras@outlook.com",
+      password: adminPassword,
+    },
+  });
+
+  const carol = await prisma.user.upsert({
+    where: { email: "cneves.rj@gmail.com" },
+    update: {
+      password: adminPassword,
+    },
+    create: {
+      nickname: "Carolina Moreira",
+      email: "cneves.rj@gmail.com",
+      password: adminPassword,
+    },
+  });
+
+  console.log("Usuários base criados:");
+  console.log("- admin@home.com / @dm1nTI127@!");
+  console.log("- fabeiras@outlook.com / @dm1nTI127@!");
+  console.log("- cneves.rj@gmail.com / @dm1nTI127@!");
 
   // Status
   const statusNames = ["Pago", "Pendente", "Débito Aut.", "Cancelado"];
@@ -136,6 +166,11 @@ async function main() {
     const type = createdTypes[exp.descricao];
     const status = createdStatuses[exp.status] || null;
 
+    // Determina qual o proprietário (userId) da despesa com base no responsável
+    let ownerId = admin.id;
+    if (exp.responsavel === "Fábio Moreira") ownerId = fabio.id;
+    if (exp.responsavel === "Carolina Moreira") ownerId = carol.id;
+
     await prisma.expense.create({
       data: {
         descricao: exp.descricao,
@@ -144,7 +179,7 @@ async function main() {
         real: exp.real,
         vencimento: exp.vencimento,
         status: exp.status,
-        userId: admin.id,
+        userId: ownerId,
         typeId: type?.id,
         statusId: status?.id,
         totalParcelas: (exp as { totalParcelas?: number }).totalParcelas || 1,
@@ -152,7 +187,7 @@ async function main() {
       },
     });
   }
-  console.log("Despesas de Dezembro/2025 importadas.");
+  console.log("Despesas de Dezembro/2025 importadas e vinculadas aos respectivos usuários.");
 }
 
 main()

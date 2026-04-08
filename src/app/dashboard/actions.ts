@@ -13,6 +13,7 @@ export async function getExpensesByMonth(month: number, year: number) {
 
     const expenses = await prisma.expense.findMany({
       where: {
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {}),
         vencimento: {
           gte: startDate,
           lte: endDate,
@@ -29,6 +30,12 @@ export async function getExpensesByMonth(month: number, year: number) {
         vencimento: 'asc',
       },
     })
+    
+    // Se não houver despesas para o usuário, podemos sugerir ou verificar 
+    // se o banco está inicializado corretamente
+    if (expenses.length === 0) {
+      console.log(`Nenhuma despesa encontrada para o usuário ${user.email} no mês ${month + 1}/${year}`)
+    }
 
     // A lógica para incrementar parcelas progressivamente baseado no mês visualizado
     // foi implementada no componente de colunas (columns.tsx), pois lá temos acesso
@@ -46,7 +53,8 @@ export async function updateExpenseStatus(id: number, status: string) {
     const user = await requireUser()
     const updatedExpense = await prisma.expense.update({
       where: { 
-        id
+        id,
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {})
       },
       data: { status },
     })
@@ -63,7 +71,8 @@ export async function updateExpenseDescription(id: number, descricao: string) {
     const user = await requireUser()
     const originalExpense = await prisma.expense.findUnique({ 
       where: { 
-        id
+        id,
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {})
       } 
     })
     
@@ -72,7 +81,10 @@ export async function updateExpenseDescription(id: number, descricao: string) {
     }
 
     const updatedExpense = await prisma.expense.update({
-      where: { id },
+      where: { 
+        id,
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {})
+      },
       data: { descricao },
       include: { type: true }
     })
@@ -80,6 +92,7 @@ export async function updateExpenseDescription(id: number, descricao: string) {
     // Replicar a mudança de descrição para todas as despesas idênticas do usuário
     await prisma.expense.updateMany({
       where: { 
+        userId: user.id,
         descricao: originalExpense.descricao
       },
       data: { descricao }
@@ -108,7 +121,8 @@ export async function deleteExpense(id: number) {
     const user = await requireUser()
     await prisma.expense.delete({
       where: { 
-        id
+        id,
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {})
       },
     })
     revalidatePath("/dashboard")
@@ -322,7 +336,8 @@ export async function updateExpense(id: number, data: {
     // Buscar a despesa original ANTES do update para comparar a descrição
     const originalExpense = await prisma.expense.findUnique({ 
       where: { 
-        id
+        id,
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {})
       } 
     })
     
@@ -346,7 +361,8 @@ export async function updateExpense(id: number, data: {
 
     const updatedExpense = await prisma.expense.update({
       where: { 
-        id
+        id,
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {})
       },
       data: {
         ...updateData,
@@ -436,7 +452,8 @@ export async function updateExpenseResponsavel(id: number, userId: number, nickn
     const user = await requireUser()
     const updatedExpense = await prisma.expense.update({
       where: { 
-        id
+        id,
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {})
       },
       data: { userId, responsavel: nickname },
     })
@@ -453,7 +470,8 @@ export async function updateExpenseReal(id: number, real: number) {
     const user = await requireUser()
     const updatedExpense = await prisma.expense.update({
       where: { 
-        id
+        id,
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {})
       },
       data: { real },
     })
@@ -473,7 +491,8 @@ export async function updateExpenseVencimento(id: number, vencimento: Date) {
     
     const updatedExpense = await prisma.expense.update({
       where: { 
-        id
+        id,
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {})
       },
       data: { vencimento: normalizedVencimento },
     })
@@ -497,9 +516,11 @@ export async function getDashboardData(month: number, year: number) {
     const prevStartDate = new Date(Date.UTC(prevYear, prevMonth, 1, 0, 0, 0, 0))
     const prevEndDate = new Date(Date.UTC(prevYear, prevMonth + 1, 0, 23, 59, 59, 999))
 
+    const filter = (user.role !== "ADMIN" ? { userId: user.id } : {})
     const [currentExpenses, prevExpenses, currentTotalPrevisto] = await Promise.all([
       prisma.expense.aggregate({
         where: { 
+          ...filter,
           vencimento: { gte: startDate, lte: endDate },
           status: "Pago"
         },
@@ -507,6 +528,7 @@ export async function getDashboardData(month: number, year: number) {
       }),
       prisma.expense.aggregate({
         where: { 
+          ...filter,
           vencimento: { gte: prevStartDate, lte: prevEndDate },
           status: "Pago"
         },
@@ -514,6 +536,7 @@ export async function getDashboardData(month: number, year: number) {
       }),
       prisma.expense.aggregate({
         where: { 
+          ...filter,
           vencimento: { gte: startDate, lte: endDate }
         },
         _sum: { real: true }
@@ -556,6 +579,7 @@ export async function importPreviousMonthExpenses(targetMonth: number, targetYea
 
     const prevExpenses = await prisma.expense.findMany({
       where: {
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {}),
         vencimento: {
           gte: startDate,
           lte: endDate,
@@ -652,6 +676,7 @@ export async function getChartData(filter: string, selectedYear: number, selecte
 
     const expenses = await prisma.expense.findMany({
       where: {
+        ...(user.role !== "ADMIN" ? { userId: user.id } : {}),
         vencimento: {
           gte: startDate,
           lte: endDate
