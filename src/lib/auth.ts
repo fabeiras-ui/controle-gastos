@@ -7,8 +7,8 @@ import bcrypt from "bcryptjs"
 export const authOptions: AuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "fake-id",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "fake-secret",
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -64,7 +64,7 @@ export const authOptions: AuthOptions = {
     },
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
+        token.id = Number(user.id)
       }
       
       // Limpa campos que podem aumentar muito o tamanho do cookie (HTTP 431)
@@ -76,7 +76,7 @@ export const authOptions: AuthOptions = {
     },
     async session({ session, token }) {
       if (token && session.user) {
-        (session.user as { id: string }).id = token.id as string
+        (session.user as { id: number }).id = token.id as number
       }
       return session
     }
