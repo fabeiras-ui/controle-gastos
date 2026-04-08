@@ -1,6 +1,6 @@
 "use client"
 
-import {ColumnDef} from "@tanstack/react-table"
+import {ColumnDef, Column} from "@tanstack/react-table"
 import {ArrowUpDown, ArrowDownAZ, ArrowDownZA, Trash2, HelpCircle, Pencil} from "lucide-react"
 import * as LucideIcons from "lucide-react"
 import {Button} from "@/components/ui/button"
@@ -65,13 +65,13 @@ export type Expense = {
 const IconRenderer = ({iconName}: { iconName?: string | null }) => {
 	if (!iconName) return <HelpCircle className="h-4 w-4 text-muted-foreground"/>
 
-	const Icon = (LucideIcons as any)[iconName]
+	const Icon = (LucideIcons as Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>>)[iconName]
 	if (!Icon) return <HelpCircle className="h-4 w-4 text-muted-foreground"/>
 
 	return <Icon className="h-4 w-4"/>
 }
 
-const SortButton = ({column, label}: { column: any, label: string }) => {
+const SortButton = ({column, label}: { column: Column<unknown, unknown>, label: string }) => {
 	const isSorted = column.getIsSorted()
 
 	const getIcon = () => {
@@ -348,6 +348,105 @@ const VencimentoCell = ({expense, onUpdate}: { expense: Expense, onUpdate: () =>
 	)
 }
 
+const ActionsCell = ({ expense, onUpdate }: { expense: Expense; onUpdate: () => void }) => {
+	const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
+	const [isSaving, setIsSaving] = React.useState(false)
+
+	const handleSave = async (formData: ExpenseFormData) => {
+		if (formData.descricao !== expense.descricao) {
+			if (!confirm("Alterar o nome da despesa irá replicar esta mudança em todos os demais meses. Deseja continuar?")) {
+				return
+			}
+		}
+
+		setIsSaving(true)
+		const result = await updateExpense(expense.id, {
+			descricao: formData.descricao,
+			responsavel: formData.responsavel,
+			real: parseFloat(formData.real),
+			vencimento: new Date(formData.vencimento),
+			status: formData.status,
+			userId: parseInt(formData.userId),
+			totalParcelas: parseInt(formData.totalParcelas),
+			parcelaAtual: parseInt(formData.parcelaAtual),
+			categoryId: parseInt(formData.categoryId),
+		})
+		setIsSaving(false)
+
+		if (result.success) {
+			toast.success("Despesa atualizada com sucesso")
+			setIsEditDialogOpen(false)
+			onUpdate()
+		} else {
+			toast.error("Erro ao atualizar despesa")
+		}
+	}
+
+	const handleDelete = async () => {
+		if (confirm("Tem certeza que deseja excluir esta despesa?")) {
+			const result = await deleteExpense(expense.id)
+			if (result.success) {
+				toast.success("Despesa excluída com sucesso")
+				onUpdate()
+			} else {
+				toast.error("Erro ao excluir despesa")
+			}
+		}
+	}
+
+	const initialData: ExpenseFormData = {
+		descricao: expense.descricao,
+		responsavel: expense.responsavel,
+		real: expense.real.toString(),
+		vencimento: new Date(expense.vencimento).toISOString().split("T")[0],
+		status: expense.status,
+		userId: expense.userId.toString(),
+		totalParcelas: expense.totalParcelas?.toString() || "1",
+		parcelaAtual: expense.parcelaAtual?.toString() || "1",
+		categoryId: expense.type?.categoryRef?.id?.toString() || "",
+	}
+
+	return (
+		<div className="flex items-center gap-2">
+			<Button
+				variant="ghost"
+				className="h-8 w-8 p-0"
+				onClick={() => setIsEditDialogOpen(true)}
+			>
+				<Pencil className="h-4 w-4"/>
+				<span className="sr-only">Editar</span>
+			</Button>
+
+			<Button
+				variant="ghost"
+				className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+				onClick={handleDelete}
+			>
+				<Trash2 className="h-4 w-4"/>
+				<span className="sr-only">Deletar</span>
+			</Button>
+
+			<Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+				<DialogContent className="sm:max-w-[625px]" >
+					<DialogHeader>
+						<DialogTitle>Editar Despesa</DialogTitle>
+						<DialogDescription className="sr-only">
+							Faça alterações nas informações da despesa selecionada.
+						</DialogDescription>
+					</DialogHeader>
+					<ExpenseForm
+						initialData={initialData}
+						onSubmit={handleSave}
+						loading={isSaving}
+						onCancel={() => setIsEditDialogOpen(false)}
+						submitLabel="Salvar Alterações"
+					/>
+				</DialogContent>
+			</Dialog>
+		</div>
+	)
+}
+
 export const getColumns = (
 	statusList: { name: string; color?: string }[],
 	categories: { id: number, name: string }[],
@@ -418,104 +517,6 @@ export const getColumns = (
 	{
 		id: "actions",
 		header: "Ações",
-		cell: ({row}) => {
-			const expense = row.original
-			const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
-			const [isSaving, setIsSaving] = React.useState(false)
-
-			const handleSave = async (formData: ExpenseFormData) => {
-				if (formData.descricao !== expense.descricao) {
-					if (!confirm("Alterar o nome da despesa irá replicar esta mudança em todos os demais meses. Deseja continuar?")) {
-						return
-					}
-				}
-
-				setIsSaving(true)
-				const result = await updateExpense(expense.id, {
-					descricao: formData.descricao,
-					responsavel: formData.responsavel,
-					real: parseFloat(formData.real),
-					vencimento: new Date(formData.vencimento),
-					status: formData.status,
-					userId: parseInt(formData.userId),
-					totalParcelas: parseInt(formData.totalParcelas),
-					parcelaAtual: parseInt(formData.parcelaAtual),
-					categoryId: parseInt(formData.categoryId),
-				})
-				setIsSaving(false)
-
-				if (result.success) {
-					toast.success("Despesa atualizada com sucesso")
-					setIsEditDialogOpen(false)
-					onUpdate()
-				} else {
-					toast.error("Erro ao atualizar despesa")
-				}
-			}
-
-			const handleDelete = async () => {
-				if (confirm("Tem certeza que deseja excluir esta despesa?")) {
-					const result = await deleteExpense(expense.id)
-					if (result.success) {
-						toast.success("Despesa excluída com sucesso")
-						onUpdate()
-					} else {
-						toast.error("Erro ao excluir despesa")
-					}
-				}
-			}
-
-			const initialData: ExpenseFormData = {
-				descricao: expense.descricao,
-				responsavel: expense.responsavel,
-				real: expense.real.toString(),
-				vencimento: new Date(expense.vencimento).toISOString().split("T")[0],
-				status: expense.status,
-				userId: expense.userId.toString(),
-				totalParcelas: expense.totalParcelas?.toString() || "1",
-				parcelaAtual: expense.parcelaAtual?.toString() || "1",
-				categoryId: (expense as any).type?.categoryRef?.id?.toString() || "",
-			}
-
-			return (
-				<div className="flex items-center gap-2">
-					<Button
-						variant="ghost"
-						className="h-8 w-8 p-0"
-						onClick={() => setIsEditDialogOpen(true)}
-					>
-						<Pencil className="h-4 w-4"/>
-						<span className="sr-only">Editar</span>
-					</Button>
-
-					<Button
-						variant="ghost"
-						className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-						onClick={handleDelete}
-					>
-						<Trash2 className="h-4 w-4"/>
-						<span className="sr-only">Deletar</span>
-					</Button>
-
-					<Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-						<DialogContent className="sm:max-w-[625px]" >
-							<DialogHeader>
-								<DialogTitle>Editar Despesa</DialogTitle>
-								<DialogDescription className="sr-only">
-									Faça alterações nas informações da despesa selecionada.
-								</DialogDescription>
-							</DialogHeader>
-							<ExpenseForm
-								initialData={initialData}
-								onSubmit={handleSave}
-								loading={isSaving}
-								onCancel={() => setIsEditDialogOpen(false)}
-								submitLabel="Salvar Alterações"
-							/>
-						</DialogContent>
-					</Dialog>
-				</div>
-			)
-		},
+		cell: ({row}) => <ActionsCell expense={row.original} onUpdate={onUpdate} />,
 	},
 ]

@@ -12,9 +12,19 @@ const COLORS = [
   "#FFB74D", "#FF8A65"
 ];
 
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
+}
+
 export function LiveblocksProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
-  const color = React.useMemo(() => COLORS[Math.floor(Math.random() * COLORS.length)], []);
+  const userKey = session?.user?.email || session?.user?.name || "guest";
+  const color = React.useMemo(() => COLORS[hashString(userKey) % COLORS.length], [userKey]);
 
   const initialPresence = React.useMemo(() => ({
     cursor: null,

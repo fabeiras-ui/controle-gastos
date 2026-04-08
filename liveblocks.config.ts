@@ -13,13 +13,9 @@ type Presence = {
   message?: string;
 };
 
-type Storage = {
-  // Define the structure of your storage here
-};
+type Storage = object;
 
-type UserMeta = {
-  // Define the structure of your user metadata here
-};
+type UserMeta = object;
 
 type RoomEvent = {
   type: "REACTION";

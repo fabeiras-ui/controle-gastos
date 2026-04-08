@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // prisma/seed.js
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');

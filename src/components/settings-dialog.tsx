@@ -54,8 +54,8 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
   const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"categories" | "status">("categories")
   
-  const [categories, setCategories] = useState<any[]>([])
-  const [statuses, setStatuses] = useState<any[]>([])
+  const [categories, setCategories] = useState<{ id: number; name: string; icon?: string | null }[]>([])
+  const [statuses, setStatuses] = useState<{ id: number; name: string; color?: string | null }[]>([])
   
   const [newCategory, setNewCategory] = useState({ name: "", icon: "HelpCircle" })
   const [newStatus, setNewStatus] = useState<{ name: string; color?: string }>({ name: "", color: "#16a34a" })
@@ -67,9 +67,14 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
   }
 
   useEffect(() => {
-    if (open) {
-      fetchData()
-    }
+    if (!open) return
+    let cancelled = false
+    Promise.all([getStatuses(), getCategories()]).then(([stats, cats]) => {
+      if (cancelled) return
+      setStatuses(stats as { id: number; name: string; color?: string | null }[])
+      setCategories(cats as { id: number; name: string; icon?: string | null }[])
+    })
+    return () => { cancelled = true }
   }, [open])
 
   const handleCreateCategory = async (e: React.FormEvent) => {

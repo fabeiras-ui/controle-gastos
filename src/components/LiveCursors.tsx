@@ -155,13 +155,13 @@ export function LiveCursors() {
     >
       {reactions.map((reaction) => (
         <div
-          key={reaction.timestamp.toString() + Math.random()}
+          key={`${reaction.timestamp}-${reaction.point.x}-${reaction.point.y}`}
           className="absolute pointer-events-none select-none emoji-explosion"
           style={{
             transform: `translate(${reaction.point.x}px, ${reaction.point.y}px)`,
-            "--tw-translate-x": `${reaction.dx}px`,
-            "--tw-translate-y": `${reaction.dy}px`,
-          } as any}
+            ["--tw-translate-x"]: `${reaction.dx}px`,
+            ["--tw-translate-y"]: `${reaction.dy}px`,
+          } as React.CSSProperties}
         >
           <div className="text-2xl">{reaction.value}</div>
         </div>
@@ -230,7 +230,7 @@ export function LiveCursors() {
               style={{ backgroundColor: presence.color || "#3b82f6" }}
             >
               <Avatar className="h-4 w-4 border-none">
-                <AvatarImage src={(presence as any).avatar} />
+                <AvatarImage src={(presence as { avatar?: string | null }).avatar || undefined} />
                 <AvatarFallback className="text-[8px] bg-transparent text-white">
                   {presence.name?.substring(0, 1).toUpperCase() || "C"}
                 </AvatarFallback>

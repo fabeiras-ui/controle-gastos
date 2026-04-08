@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { getExpensesByMonth, getStatusList, getCategories, getUsers } from "./actions"
 import { DataTable } from "@/components/ui/data-table"
 import { getColumns, Expense } from "./columns"
+import type { Status, Category, AppUser } from "@/types"
 
 export function ExpenseTable({ 
   month, 
@@ -17,17 +18,14 @@ export function ExpenseTable({
   onUpdate?: () => void;
 }) {
   const [internalExpenses, setInternalExpenses] = useState<Expense[]>([])
-  const [loading, setLoading] = useState(!data)
-  const [statusList, setStatusList] = useState<{ name: string; color?: string }[]>([])
-  const [categories, setCategories] = useState<{id: number, name: string}[]>([])
-  const [users, setUsers] = useState<{id: number, nickname: string}[]>([])
+  const [statusList, setStatusList] = useState<Status[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [users, setUsers] = useState<AppUser[]>([])
 
   const loadExpenses = useCallback(async () => {
     if (data) return
-    setLoading(true)
     const result = await getExpensesByMonth(month, year)
-    setInternalExpenses(result as any)
-    setLoading(false)
+    setInternalExpenses(result as unknown as Expense[])
   }, [month, year, data])
 
   const handleUpdate = useCallback(() => {
@@ -39,10 +37,17 @@ export function ExpenseTable({
   }, [onUpdate, loadExpenses])
 
   useEffect(() => {
-    loadExpenses()
-  }, [loadExpenses])
+    if (data) return
+    let cancelled = false
+    getExpensesByMonth(month, year).then((result) => {
+      if (cancelled) return
+      setInternalExpenses(result as unknown as Expense[])
+    })
+    return () => { cancelled = true }
+  }, [month, year, data])
 
   const expenses = data || internalExpenses
+  const loading = !data && internalExpenses.length === 0
 
   useEffect(() => {
     async function loadInitialData() {
@@ -51,9 +56,9 @@ export function ExpenseTable({
         getCategories(),
         getUsers()
       ])
-      setStatusList(statuses as any)
-      setCategories(cats)
-      setUsers(userData)
+      setStatusList(statuses as Status[])
+      setCategories(cats as Category[])
+      setUsers(userData as AppUser[])
     }
     loadInitialData()
   }, [])
@@ -62,7 +67,7 @@ export function ExpenseTable({
     return <div className="p-4 text-center">Carregando despesas...</div>
   }
 
-  const columns = getColumns(statusList as any, categories, handleUpdate, month, year, users)
+  const columns = getColumns(statusList, categories, handleUpdate, month, year, users)
 
   return (
     <div className="">
