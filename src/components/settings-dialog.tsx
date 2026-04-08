@@ -26,10 +26,6 @@ import {
 import { Trash2, Plus, HelpCircle, Settings, Tag, ListChecks, Layers } from "lucide-react"
 import * as LucideIcons from "lucide-react"
 import { 
-  createExpenseType, 
-  deleteExpenseType, 
-  getExpenseTypes, 
-  updateExpenseTypeStatus,
   createStatus,
   deleteStatus,
   getStatuses,
@@ -56,19 +52,16 @@ const IconRenderer = ({ iconName }: { iconName?: string | null }) => {
 
 export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
   const [open, setOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<"categories" | "status" | "expenseTypes">("categories")
+  const [activeTab, setActiveTab] = useState<"categories" | "status">("categories")
   
-  const [expenseTypes, setExpenseTypes] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
   const [statuses, setStatuses] = useState<any[]>([])
   
   const [newCategory, setNewCategory] = useState({ name: "", icon: "HelpCircle" })
-  const [newExpenseType, setNewExpenseType] = useState({ name: "", categoryId: "", isActive: true })
-  const [newStatus, setNewStatus] = useState("")
+  const [newStatus, setNewStatus] = useState<{ name: string; color?: string }>({ name: "", color: "#16a34a" })
 
   const fetchData = async () => {
-    const [types, stats, cats] = await Promise.all([getExpenseTypes(), getStatuses(), getCategories()])
-    setExpenseTypes(types)
+    const [stats, cats] = await Promise.all([getStatuses(), getCategories()])
     setStatuses(stats)
     setCategories(cats)
   }
@@ -105,51 +98,12 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
     }
   }
 
-  const handleCreateExpenseType = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newExpenseType.name || !newExpenseType.categoryId) {
-      toast.error("Nome e Categoria são obrigatórios")
-      return
-    }
-    const res = await createExpenseType({
-      name: newExpenseType.name,
-      categoryId: parseInt(newExpenseType.categoryId),
-      isActive: newExpenseType.isActive
-    })
-    if (res.success) {
-      setNewExpenseType({ name: "", categoryId: "", isActive: true })
-      fetchData()
-      toast.success("Tipo de despesa criado com sucesso")
-    } else {
-      toast.error(res.error || "Erro ao criar tipo de despesa")
-    }
-  }
-
-  const handleDeleteExpenseType = async (id: number) => {
-    const res = await deleteExpenseType(id)
-    if (res.success) {
-      fetchData()
-      toast.success("Tipo de despesa excluído")
-    } else {
-      toast.error(res.error || "Erro ao excluir tipo de despesa")
-    }
-  }
-
-  const handleToggleActive = async (id: number, currentStatus: boolean) => {
-    const res = await updateExpenseTypeStatus(id, !currentStatus)
-    if (res.success) {
-      fetchData()
-    } else {
-      toast.error(res.error || "Erro ao atualizar status")
-    }
-  }
-
   const handleCreateStatus = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newStatus) return
+    if (!newStatus?.name) return
     const res = await createStatus(newStatus)
     if (res.success) {
-      setNewStatus("")
+      setNewStatus({ name: "", color: "#16a34a" })
       fetchData()
       toast.success("Status criado com sucesso")
     } else {
@@ -166,13 +120,6 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
       toast.error(res.error || "Erro ao excluir status")
     }
   }
-
-  const groupedExpenseTypes = expenseTypes.reduce((acc: any, curr) => {
-    const categoryName = curr.categoryRef?.name || "Sem Categoria"
-    if (!acc[categoryName]) acc[categoryName] = []
-    acc[categoryName].push(curr)
-    return acc
-  }, {})
 
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
 
@@ -194,7 +141,7 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
       <DialogContent className="max-w-[425px] sm:max-w-5xl h-[80vh] p-0 overflow-hidden flex flex-col">
         <DialogTitle className="sr-only">Configurações</DialogTitle>
         <DialogDescription className="sr-only">
-          Gerencie categorias, status e tipos de despesa.
+          Gerencie categorias e status das despesas.
         </DialogDescription>
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
@@ -229,18 +176,6 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
               >
                 <ListChecks className="h-4 w-4" />
                 Status
-              </button>
-              <button
-                onClick={() => setActiveTab("expenseTypes")}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  activeTab === "expenseTypes" 
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                )}
-              >
-                <Layers className="h-4 w-4" />
-                Tipos de Despesa
               </button>
             </nav>
           </div>
@@ -332,10 +267,27 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
                     <Label htmlFor="status-name">Nome do Status</Label>
                     <Input 
                       id="status-name" 
-                      value={newStatus} 
-                      onChange={(e) => setNewStatus(e.target.value)}
+                      value={newStatus.name}
+                      onChange={(e) => setNewStatus({ ...newStatus, name: e.target.value })}
                       placeholder="Ex: Pago, Pendente"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="status-color">Cor</Label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        id="status-color"
+                        type="color"
+                        value={newStatus.color || "#16a34a"}
+                        onChange={(e) => setNewStatus({ ...newStatus, color: e.target.value })}
+                        className="h-8 w-12 p-0 border rounded"
+                      />
+                      <Input 
+                        value={newStatus.color || "#16a34a"}
+                        onChange={(e) => setNewStatus({ ...newStatus, color: e.target.value })}
+                        placeholder="#16a34a"
+                      />
+                    </div>
                   </div>
                   <Button type="submit" className="w-full">
                     <Plus className="mr-2 h-4 w-4" /> Cadastrar Status
@@ -345,7 +297,10 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
                 <div className="border rounded-md divide-y max-w-2xl">
                   {statuses.map((item: any) => (
                     <div key={item.id} className="flex items-center justify-between p-3">
-                      <span className="font-medium">{item.name}</span>
+                      <div className="flex items-center gap-3">
+                                              <span className="inline-block h-4 w-4 rounded-sm border" style={{ backgroundColor: item.color || undefined }} />
+                                              <span className="font-medium">{item.name}</span>
+                                            </div>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -360,92 +315,6 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
                   ))}
                   {statuses.length === 0 && (
                     <div className="p-8 text-center text-zinc-500">Nenhum status cadastrado.</div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === "expenseTypes" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight mb-1">Tipos de Despesa</h2>
-                  <p className="text-sm text-zinc-500">Especifique os tipos de gastos dentro de cada categoria.</p>
-                </div>
-
-                <form onSubmit={handleCreateExpenseType} className="space-y-4 max-w-md pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expense-name">Nome da Despesa</Label>
-                    <Input 
-                      id="expense-name" 
-                      value={newExpenseType.name} 
-                      onChange={(e) => setNewExpenseType({...newExpenseType, name: e.target.value})}
-                      placeholder="Ex: Aluguel"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="expense-category">Categoria</Label>
-                    <Select 
-                      value={newExpenseType.categoryId} 
-                      onValueChange={(value) => value && setNewExpenseType({...newExpenseType, categoryId: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue>
-                          {categories.find(c => c.id.toString() === newExpenseType.categoryId)?.name || "Selecione uma categoria"}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id.toString()}>
-                            <div className="flex items-center gap-2">
-                              <IconRenderer iconName={cat.icon} />
-                              {cat.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <Plus className="mr-2 h-4 w-4" /> Cadastrar Tipo
-                  </Button>
-                </form>
-
-                <div className="space-y-6 max-w-2xl">
-                  {Object.entries(groupedExpenseTypes).map(([categoryName, items]: [string, any]) => (
-                    <div key={categoryName} className="space-y-2">
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-2 px-1">
-                        <IconRenderer iconName={items[0]?.categoryRef?.icon} />
-                        {categoryName}
-                      </h4>
-                      <div className="border rounded-md divide-y bg-white">
-                        {items.map((item: any) => (
-                          <div key={item.id} className="flex items-center justify-between p-3">
-                            <div className="flex items-center gap-3">
-                              <Switch 
-                                checked={item.isActive} 
-                                onCheckedChange={() => handleToggleActive(item.id, item.isActive)}
-                              />
-                              <span className={cn("font-medium", !item.isActive && "text-zinc-400 line-through")}>
-                                {item.name}
-                              </span>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => handleDeleteExpenseType(item.id)}
-                              disabled={item._count.expenses > 0}
-                              title={item._count.expenses > 0 ? "Não é possível excluir: existem despesas atreladas" : "Excluir"}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                  {Object.keys(groupedExpenseTypes).length === 0 && (
-                    <div className="p-8 text-center text-zinc-500 border rounded-md">Nenhum tipo cadastrado.</div>
                   )}
                 </div>
               </div>

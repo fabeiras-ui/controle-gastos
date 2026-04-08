@@ -61,6 +61,7 @@ model Category {
 model Status {
   id        Int       @id @default(autoincrement())
   name      String    @unique
+  color     String?
   createdAt DateTime  @default(now())
   expenses  Expense[]
 }

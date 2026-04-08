@@ -122,11 +122,13 @@ export async function deleteExpense(id: number) {
 export async function getStatusList() {
   try {
     await requireUser()
-    const statuses = await prisma.status.findMany()
-    return statuses.map(s => s.name)
+    const statuses = await prisma.status.findMany({
+      select: { name: true, color: true }
+    })
+    return statuses // [{ name, color }]
   } catch (error) {
     console.error("Erro ao buscar status:", error)
-    return ["Pendente", "Pago"] // Fallback
+    return []
   }
 }
 

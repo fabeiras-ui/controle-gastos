@@ -247,7 +247,7 @@ const ResponsavelCell = ({expense, users, onUpdate}: { expense: Expense, users: 
 	)
 }
 
-const StatusCell = ({expense, statusList, onUpdate}: { expense: Expense, statusList: string[], onUpdate: () => void }) => {
+const StatusCell = ({expense, statusList, onUpdate}: { expense: Expense, statusList: { name: string; color?: string }[], onUpdate: () => void }) => {
 	const handleStatusUpdate = async (newStatus: string | null) => {
     if (newStatus === null) return
 		if (newStatus === expense.status) return
@@ -261,32 +261,39 @@ const StatusCell = ({expense, statusList, onUpdate}: { expense: Expense, statusL
 	}
 
 	let colorClass = "bg-gray-100 text-gray-800"
-	switch (expense.status.toLowerCase()) {
-		case "pago":
-			colorClass = "bg-green-100 text-green-800"
-			break
-		case "cancelado":
-			colorClass = "bg-red-100 text-red-800"
-			break
-		case "a vencer":
-		case "pendente":
-			colorClass = "bg-yellow-100 text-yellow-800"
-			break
-		case "debito automatico":
-		case "débito automático":
-			colorClass = "bg-blue-100 text-blue-800"
-			break
+	const matched = statusList.find(s => s.name?.toLowerCase() === expense.status?.toLowerCase())
+	const style: React.CSSProperties = {}
+	if (matched?.color) {
+		style.backgroundColor = matched.color
+		style.color = "#111827" // zinc-900 default; manter simples para legibilidade
+	} else {
+		switch (expense.status.toLowerCase()) {
+			case "pago":
+				colorClass = "bg-green-100 text-green-800"
+				break
+			case "cancelado":
+				colorClass = "bg-red-100 text-red-800"
+				break
+			case "a vencer":
+			case "pendente":
+				colorClass = "bg-yellow-100 text-yellow-800"
+				break
+			case "debito automatico":
+			case "débito automático":
+				colorClass = "bg-blue-100 text-blue-800"
+				break
+		}
 	}
 
 	return (
 		<Select value={expense.status} onValueChange={handleStatusUpdate}>
-			<SelectTrigger className={cn("h-7 w-fit border-none shadow-none rounded-full px-2.5 py-0.5 text-xs font-medium focus:ring-0", colorClass)}>
+			<SelectTrigger style={style} className={cn("h-7 w-fit border-none shadow-none rounded-full px-2.5 py-0.5 text-xs font-medium focus:ring-0", colorClass)}>
 				<SelectValue>{expense.status}</SelectValue>
 			</SelectTrigger>
 			<SelectContent>
-				{statusList.map((status) => (
-					<SelectItem key={status} value={status}>
-						{status}
+				{statusList.map((s) => (
+					<SelectItem key={s.name} value={s.name}>
+						{s.name}
 					</SelectItem>
 				))}
 			</SelectContent>
@@ -342,7 +349,7 @@ const VencimentoCell = ({expense, onUpdate}: { expense: Expense, onUpdate: () =>
 }
 
 export const getColumns = (
-	statusList: string[],
+	statusList: { name: string; color?: string }[],
 	categories: { id: number, name: string }[],
 	onUpdate: () => void,
 	currentMonth?: number,

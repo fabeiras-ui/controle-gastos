@@ -41,7 +41,7 @@ function DashboardContent() {
 	const [searchTerm, setSearchTerm] = useState("")
 	const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
 	const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-	const [allStatuses, setAllStatuses] = useState<string[]>([])
+ const [allStatuses, setAllStatuses] = useState<string[]>([]) // nomes apenas para filtros
 	const [allCategories, setAllCategories] = useState<{id: number, name: string}[]>([])
 
 	const months = [
@@ -89,12 +89,12 @@ function DashboardContent() {
 		])
 	}
 
-	const loadFilterOptions = async () => {
+ const loadFilterOptions = async () => {
 		const [statuses, cats] = await Promise.all([
 			getStatusList(),
 			getCategories()
 		])
-		setAllStatuses(statuses)
+		setAllStatuses((statuses as any).map((s: any) => s.name))
 		setAllCategories(cats)
 	}
 

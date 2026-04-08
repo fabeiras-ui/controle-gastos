@@ -146,11 +146,12 @@ export async function getStatuses() {
   }
 }
 
-export async function createStatus(name: string) {
+export async function createStatus(input: { name: string; color?: string } | string) {
   try {
     await requireUser()
+    const payload = typeof input === 'string' ? { name: input } : { name: input.name, color: input.color }
     const status = await prisma.status.create({
-      data: { name }
+      data: payload
     })
     revalidatePath("/settings")
     return { success: true, data: status }

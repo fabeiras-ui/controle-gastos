@@ -18,7 +18,7 @@ export function ExpenseTable({
 }) {
   const [internalExpenses, setInternalExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(!data)
-  const [statusList, setStatusList] = useState<string[]>([])
+  const [statusList, setStatusList] = useState<{ name: string; color?: string }[]>([])
   const [categories, setCategories] = useState<{id: number, name: string}[]>([])
   const [users, setUsers] = useState<{id: number, nickname: string}[]>([])
 
@@ -51,7 +51,7 @@ export function ExpenseTable({
         getCategories(),
         getUsers()
       ])
-      setStatusList(statuses)
+      setStatusList(statuses as any)
       setCategories(cats)
       setUsers(userData)
     }
@@ -62,7 +62,7 @@ export function ExpenseTable({
     return <div className="p-4 text-center">Carregando despesas...</div>
   }
 
-  const columns = getColumns(statusList, categories, handleUpdate, month, year, users)
+  const columns = getColumns(statusList as any, categories, handleUpdate, month, year, users)
 
   return (
     <div className="">
