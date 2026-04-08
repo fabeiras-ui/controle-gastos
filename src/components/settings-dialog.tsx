@@ -54,7 +54,7 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
   const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"categories" | "status">("categories")
   
-  const [categories, setCategories] = useState<{ id: number; name: string; icon?: string | null }[]>([])
+  const [categories, setCategories] = useState<{ id: number; name: string; icon?: string | null; _count?: { types: number } }[]>([])
   const [statuses, setStatuses] = useState<{ id: number; name: string; color?: string | null }[]>([])
   
   const [newCategory, setNewCategory] = useState({ name: "", icon: "HelpCircle" })
@@ -63,7 +63,7 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
   const fetchData = async () => {
     const [stats, cats] = await Promise.all([getStatuses(), getCategories()])
     setStatuses(stats)
-    setCategories(cats)
+    setCategories(cats as any)
   }
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
     Promise.all([getStatuses(), getCategories()]).then(([stats, cats]) => {
       if (cancelled) return
       setStatuses(stats as { id: number; name: string; color?: string | null }[])
-      setCategories(cats as { id: number; name: string; icon?: string | null }[])
+      setCategories(cats as any)
     })
     return () => { cancelled = true }
   }, [open])
@@ -246,8 +246,8 @@ export function SettingsDialog({ trigger }: { trigger?: React.ReactElement }) {
                       <Button 
                         variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                         onClick={() => handleDeleteCategory(cat.id)}
-                        disabled={cat._count.types > 0}
-                        title={cat._count.types > 0 ? "Não é possível excluir: existem tipos vinculados" : "Excluir"}
+                        disabled={cat._count?.types ? cat._count.types > 0 : false}
+                        title={cat._count?.types && cat._count.types > 0 ? "Não é possível excluir: existem tipos vinculados" : "Excluir"}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

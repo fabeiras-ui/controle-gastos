@@ -75,10 +75,10 @@ export function MonthYearCalendar({
           <div className="flex items-center justify-center">
             <Select
               value={year.toString()}
-              onValueChange={(v) => onYearChange(parseInt(v))}
+              onValueChange={(v) => v && onYearChange(parseInt(v))}
             >
               <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Ano" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {years.map((y) => (

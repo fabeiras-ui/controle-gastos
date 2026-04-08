@@ -156,6 +156,7 @@ export function UserDialog({ onUserAdded, trigger, user }: UserDialogProps) {
             email: "",
             password: "",
             confirmPassword: "",
+            image: "",
           })
         }
     } catch (error: any) {

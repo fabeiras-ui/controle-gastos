@@ -51,7 +51,7 @@ export function ExpenseForm({
   submitLabel,
 }: ExpenseFormProps) {
   const [users, setUsers] = useState<AppUser[]>([])
-  const [statuses, setStatuses] = useState<string[]>([])
+  const [statuses, setStatuses] = useState<{ name: string; color: string | null }[]>([])
   const [categories, setCategories] = useState<Category[]>([])
 
   const [formData, setFormData] = useState<ExpenseFormData>(
@@ -76,7 +76,7 @@ export function ExpenseForm({
         getCategories(),
       ])
       setUsers(userData as AppUser[])
-      setStatuses(statusData)
+      setStatuses(statusData as { name: string; color: string | null }[])
       setCategories(categoryData as Category[])
 
       if (!initialData) {
@@ -84,7 +84,7 @@ export function ExpenseForm({
           setFormData(prev => ({ ...prev, userId: userData[0].id.toString(), responsavel: userData[0].nickname }))
         }
         if (statusData.length > 0) {
-          setFormData(prev => ({ ...prev, status: statusData[0] }))
+          setFormData(prev => ({ ...prev, status: statusData[0].name }))
         }
         if (categoryData.length > 0) {
             setFormData(prev => ({ ...prev, categoryId: categoryData[0].id.toString() }))
@@ -212,8 +212,8 @@ export function ExpenseForm({
             </SelectTrigger>
             <SelectContent>
               {statuses.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {status}
+                <SelectItem key={status.name} value={status.name}>
+                  {status.name}
                 </SelectItem>
               ))}
             </SelectContent>

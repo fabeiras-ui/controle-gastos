@@ -47,7 +47,7 @@ export type Expense = {
 	descricao: string
 	responsavel: string
 	real: number
-	vencimento: Date
+	vencimento: Date | string
 	status: string
 	userId: number
 	totalParcelas?: number | null
@@ -71,7 +71,7 @@ const IconRenderer = ({iconName}: { iconName?: string | null }) => {
 	return <Icon className="h-4 w-4"/>
 }
 
-const SortButton = ({column, label}: { column: Column<unknown, unknown>, label: string }) => {
+const SortButton = ({column, label}: { column: Column<any, any>, label: string }) => {
 	const isSorted = column.getIsSorted()
 
 	const getIcon = () => {
@@ -247,7 +247,7 @@ const ResponsavelCell = ({expense, users, onUpdate}: { expense: Expense, users: 
 	)
 }
 
-const StatusCell = ({expense, statusList, onUpdate}: { expense: Expense, statusList: { name: string; color?: string }[], onUpdate: () => void }) => {
+const StatusCell = ({expense, statusList, onUpdate}: { expense: Expense, statusList: { name: string; color?: string | null }[], onUpdate: () => void }) => {
 	const handleStatusUpdate = async (newStatus: string | null) => {
     if (newStatus === null) return
 		if (newStatus === expense.status) return
@@ -448,7 +448,7 @@ const ActionsCell = ({ expense, onUpdate }: { expense: Expense; onUpdate: () => 
 }
 
 export const getColumns = (
-	statusList: { name: string; color?: string }[],
+	statusList: { name: string; color?: string | null }[],
 	categories: { id: number, name: string }[],
 	onUpdate: () => void,
 	currentMonth?: number,

@@ -8,6 +8,9 @@ export type Category = {
   id: number
   name: string
   icon?: string | null
+  _count?: {
+    types: number
+  }
 }
 
 export type AppUser = {

@@ -291,13 +291,13 @@ function DashboardContent() {
 											dataKey="name"
 											axisLine={false}
 											tickLine={false}
-											tick={({ x, y, payload, index }) => {
+											tick={({ x, y, payload, index }: any) => {
 												const totalPoints = chartData.length;
 												const showTick = chartFilter === "30days" 
 													? (index % 2 === 0 || index === totalPoints - 1)
 													: true;
 												
-												if (!showTick) return null;
+												if (!showTick) return <g />;
 
 												return (
 													<g transform={`translate(${x},${y})`}>

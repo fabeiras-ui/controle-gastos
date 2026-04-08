@@ -28,7 +28,7 @@ export function LiveblocksProvider({ children }: { children: React.ReactNode }) 
 
   const initialPresence = React.useMemo(() => ({
     cursor: null,
-    name: session?.user?.name || session?.user?.nickname || "Usuário",
+    name: session?.user?.name || (session?.user as any)?.nickname || "Usuário",
     color,
     avatar: session?.user?.image || null,
     isAuthenticated: status === "authenticated"
